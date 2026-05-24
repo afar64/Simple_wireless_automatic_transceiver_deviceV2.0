@@ -17,8 +17,10 @@
 #define APP_TOUCH_RST_PORT     TOUCH_RST_GPIO_Port
 #define APP_TOUCH_RST_PIN      TOUCH_RST_Pin
 
-#define APP_TOUCH_GT9XX_I2C_WADDR 0xBAU
-#define APP_TOUCH_GT9XX_I2C_RADDR 0xBBU
+#define APP_TOUCH_GT9XX_I2C_WADDR_PRIMARY 0xBAU
+#define APP_TOUCH_GT9XX_I2C_RADDR_PRIMARY 0xBBU
+#define APP_TOUCH_GT9XX_I2C_WADDR_ALT     0x28U
+#define APP_TOUCH_GT9XX_I2C_RADDR_ALT     0x29U
 
 #define APP_TOUCH_GT9XX_REG_PRODUCT_ID 0x8140U
 #define APP_TOUCH_GT9XX_REG_STATUS     0x814EU
@@ -40,11 +42,14 @@ typedef struct
 static App_TouchState g_touch_state = {0};
 static uint8_t g_touch_inited = 0U;
 static TaskHandle_t g_touch_task_handle = NULL;
+static uint8_t g_touch_i2c_waddr = APP_TOUCH_GT9XX_I2C_WADDR_PRIMARY;
+static uint8_t g_touch_i2c_raddr = APP_TOUCH_GT9XX_I2C_RADDR_PRIMARY;
 
 static void App_TouchSetIntAsOutput(void);
 static void App_TouchSetIntAsExti(void);
 static void App_TouchGt9xxReset(void);
 static void App_TouchGt9xxReadAndUpdateState(void);
+static uint8_t App_TouchProductIdLooksValid(const uint8_t *product_id, uint32_t len);
 
 static void App_TouchI2cDelay(void);
 static void App_TouchI2cStart(void);
@@ -69,14 +74,17 @@ bool App_TouchInit(void)
 
   App_TouchGt9xxReset();
 
-  if(App_TouchGt9xxReadReg(APP_TOUCH_GT9XX_REG_PRODUCT_ID, product_id, sizeof(product_id)) != HAL_OK) {
-    g_touch_inited = 0U;
-    return false;
-  }
-
-  if(product_id[0] != (uint8_t)'9') {
-    g_touch_inited = 0U;
-    return false;
+  g_touch_i2c_waddr = APP_TOUCH_GT9XX_I2C_WADDR_PRIMARY;
+  g_touch_i2c_raddr = APP_TOUCH_GT9XX_I2C_RADDR_PRIMARY;
+  if((App_TouchGt9xxReadReg(APP_TOUCH_GT9XX_REG_PRODUCT_ID, product_id, sizeof(product_id)) != HAL_OK) ||
+     (App_TouchProductIdLooksValid(product_id, sizeof(product_id)) == 0U)) {
+    g_touch_i2c_waddr = APP_TOUCH_GT9XX_I2C_WADDR_ALT;
+    g_touch_i2c_raddr = APP_TOUCH_GT9XX_I2C_RADDR_ALT;
+    if((App_TouchGt9xxReadReg(APP_TOUCH_GT9XX_REG_PRODUCT_ID, product_id, sizeof(product_id)) != HAL_OK) ||
+       (App_TouchProductIdLooksValid(product_id, sizeof(product_id)) == 0U)) {
+      g_touch_inited = 0U;
+      return false;
+    }
   }
 
   taskENTER_CRITICAL();
@@ -85,6 +93,24 @@ bool App_TouchInit(void)
   taskEXIT_CRITICAL();
 
   return true;
+}
+
+static uint8_t App_TouchProductIdLooksValid(const uint8_t *product_id, uint32_t len)
+{
+  uint32_t i;
+  uint32_t digit_count = 0U;
+
+  if((product_id == NULL) || (len == 0U)) {
+    return 0U;
+  }
+
+  for(i = 0U; i < len; i++) {
+    if((product_id[i] >= (uint8_t)'0') && (product_id[i] <= (uint8_t)'9')) {
+      digit_count++;
+    }
+  }
+
+  return (digit_count >= 3U) ? 1U : 0U;
 }
 
 void App_TouchPoll(void)
@@ -412,7 +438,7 @@ static HAL_StatusTypeDef App_TouchGt9xxWriteReg(uint16_t reg, const uint8_t *buf
   }
 
   App_TouchI2cStart();
-  if(App_TouchI2cWriteByte(APP_TOUCH_GT9XX_I2C_WADDR) == 0U) {
+  if(App_TouchI2cWriteByte(g_touch_i2c_waddr) == 0U) {
     App_TouchI2cStop();
     return HAL_ERROR;
   }
@@ -445,7 +471,7 @@ static HAL_StatusTypeDef App_TouchGt9xxReadReg(uint16_t reg, uint8_t *buf, uint1
   }
 
   App_TouchI2cStart();
-  if(App_TouchI2cWriteByte(APP_TOUCH_GT9XX_I2C_WADDR) == 0U) {
+  if(App_TouchI2cWriteByte(g_touch_i2c_waddr) == 0U) {
     App_TouchI2cStop();
     return HAL_ERROR;
   }
@@ -459,7 +485,7 @@ static HAL_StatusTypeDef App_TouchGt9xxReadReg(uint16_t reg, uint8_t *buf, uint1
   }
 
   App_TouchI2cStart();
-  if(App_TouchI2cWriteByte(APP_TOUCH_GT9XX_I2C_RADDR) == 0U) {
+  if(App_TouchI2cWriteByte(g_touch_i2c_raddr) == 0U) {
     App_TouchI2cStop();
     return HAL_ERROR;
   }
