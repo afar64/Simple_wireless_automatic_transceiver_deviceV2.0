@@ -702,15 +702,15 @@ static void App_LvglUiCreateKeypad(lv_obj_t *parent)
   lv_obj_align(g_keypad_unit_label, LV_ALIGN_TOP_RIGHT, -34, 24);
 
   g_keypad_current_label = lv_label_create(g_keypad_overlay);
-  lv_obj_set_width(g_keypad_current_label, 430);
+  lv_obj_set_width(g_keypad_current_label, 520);
   lv_obj_set_style_text_color(g_keypad_current_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align(g_keypad_current_label, LV_ALIGN_TOP_LEFT, 34, 56);
 
   g_keypad_value_label = lv_label_create(g_keypad_overlay);
-  lv_obj_set_width(g_keypad_value_label, 430);
+  lv_obj_set_width(g_keypad_value_label, LV_SIZE_CONTENT);
   lv_obj_set_style_text_color(g_keypad_value_label, lv_color_hex(APP_UI_COLOR_ACCENT), 0);
   lv_obj_set_style_text_align(g_keypad_value_label, LV_TEXT_ALIGN_LEFT, 0);
-  lv_obj_align(g_keypad_value_label, LV_ALIGN_TOP_LEFT, 34, 90);
+  lv_obj_align(g_keypad_value_label, LV_ALIGN_TOP_LEFT, 150, 98);
 
   g_keypad_panel = g_keypad_overlay;
 
@@ -732,16 +732,16 @@ static void App_LvglUiCreateKeypad(lv_obj_t *parent)
       col = (i == 9) ? 1 : 2;
     }
 
-    x = 170 + (col * 82);
-    y = 154 + (row * 52);
+    x = 132 + (col * 98);
+    y = 148 + (row * 64);
     if (i == 10)
     {
       g_keypad_dot_button = App_LvglUiCreateActionButton(g_keypad_panel,
                                                          digit_texts[i],
                                                          x,
                                                          y,
-                                                         68,
-                                                         44,
+                                                         82,
+                                                         54,
                                                          App_LvglUiOnKeypadDigitClicked,
                                                          (void *)digit_texts[i]);
     }
@@ -751,17 +751,17 @@ static void App_LvglUiCreateKeypad(lv_obj_t *parent)
                                          digit_texts[i],
                                          x,
                                          y,
-                                         68,
-                                         44,
+                                         82,
+                                         54,
                                          App_LvglUiOnKeypadDigitClicked,
                                          (void *)digit_texts[i]);
     }
   }
 
-  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Back",   458, 154, 142, 44, App_LvglUiOnKeypadBackClicked, NULL);
-  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Cancel", 458, 206, 142, 44, App_LvglUiOnKeypadCancelClicked, NULL);
-  (void)App_LvglUiCreateActionButton(g_keypad_panel, "OK",     458, 258, 142, 44, App_LvglUiOnKeypadOkClicked, NULL);
-  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Del",    458, 310, 142, 44, App_LvglUiOnKeypadDeleteClicked, NULL);
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Back",   464, 148, 156, 54, App_LvglUiOnKeypadBackClicked, NULL);
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Cancel", 464, 212, 156, 54, App_LvglUiOnKeypadCancelClicked, NULL);
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "OK",     464, 276, 156, 54, App_LvglUiOnKeypadOkClicked, NULL);
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Del",    464, 340, 156, 54, App_LvglUiOnKeypadDeleteClicked, NULL);
 }
 
 static void App_LvglUiResetModeConfig(AppDacWavegenMode mode)
@@ -1710,6 +1710,8 @@ static void App_LvglUiRefreshKeypad(void)
   {
     lv_label_set_text(g_keypad_value_label, g_keypad_input);
   }
+
+  lv_obj_align_to(g_keypad_unit_label, g_keypad_value_label, LV_ALIGN_OUT_RIGHT_MID, 12, 0);
 }
 
 static uint8_t App_LvglUiTryParseKeypadValue(AppUiEditField field, const char *text, uint32_t *value_out)
