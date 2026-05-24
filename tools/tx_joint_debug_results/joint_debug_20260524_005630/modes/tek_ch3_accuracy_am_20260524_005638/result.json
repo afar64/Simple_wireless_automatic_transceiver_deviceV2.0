@@ -1,0 +1,67 @@
+{
+  "args": {
+    "scope": "192.168.2.28",
+    "scope_timeout": 30,
+    "mode": "AM",
+    "points": 300000,
+    "time_scale": 0.0001,
+    "use_iq_ref": false,
+    "ch1_scale": 0.5,
+    "ch2_scale": 0.5,
+    "ch3_scale": 0.5,
+    "ch3_position": 0.0,
+    "use_50r": true,
+    "out": "F:\\CAMKE\\backups\\restore_h743_20260523_061047\\Simple_wireless_automatic_transceiver_deviceV2.0\\tools\\tx_joint_debug_results\\joint_debug_20260524_005630\\modes",
+    "port": "COM5",
+    "baudrate": 115200,
+    "line": [
+      "TXAM 130000000 512 980 0 -50 100 10000 8192 1200 500"
+    ],
+    "char_delay_ms": 15.0,
+    "settle": 0.8,
+    "mod_freq_hz": 10000.0,
+    "am_depth_pct": 50.0,
+    "fm_dev_hz": 75000.0,
+    "bit_rate_hz": 10000.0,
+    "fsk_shift_hz": 20000.0
+  },
+  "scope_meta": {
+    "idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+    "record_length": "100000",
+    "time_scale": "100.0000E-6",
+    "sample_rate": "100.0000E+6"
+  },
+  "wave_meta": {
+    "ch3": {
+      "channel": 3,
+      "xinc": 1e-08,
+      "xzero": -0.0005,
+      "ymult": 0.02,
+      "yzero": 0.0,
+      "yoff": 0.0,
+      "points": 100000
+    },
+    "ch1": null,
+    "ch2": null
+  },
+  "serial_log": "\r\n[WB] CH0 LO set: 130000000 Hz AMP 512\r\n[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n",
+  "result": {
+    "mode": "AM",
+    "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+    "sample_rate_hz": 100000000.00005178,
+    "points": 100000,
+    "ch3_vpp_v": 0.14,
+    "ch3_rms_ac_v": 0.014614987764620264,
+    "carrier_hz": 29990000.00001553,
+    "metric_1_name": "mod_freq_hz",
+    "metric_1_value": 20000.000000010357,
+    "metric_2_name": "am_depth_pct",
+    "metric_2_value": 7.474950667663392,
+    "aux_metrics": {},
+    "pass_fail": "FAIL",
+    "notes": [
+      "AM frequency mismatch: got 20000.0 Hz",
+      "AM depth mismatch: got 7.47%"
+    ]
+  }
+}

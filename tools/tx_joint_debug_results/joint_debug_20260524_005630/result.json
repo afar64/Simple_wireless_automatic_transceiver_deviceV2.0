@@ -1,0 +1,266 @@
+{
+  "cw_sweep": {
+    "verdict": "FAIL",
+    "notes": [
+      "Sweep range mismatch: observed 120600000..120900000",
+      "Sweep step mismatch: diffs=[300000]",
+      "CH3 frequency deviated too far from expected sweep grid"
+    ],
+    "start_hz": 120000000,
+    "stop_hz": 122000000,
+    "period_ms": 2000,
+    "serial_log": [
+      {
+        "cmd": "SWEEP SET START 120000000 STOP 122000000 PERIOD_MS 2000",
+        "reply": "OK SWEEP SET\r\n"
+      },
+      {
+        "cmd": "SWEEP?",
+        "reply": "SWEEP MODE CW START 120000000 STOP 122000000 PERIOD_MS 2000 ENABLE 0 CURRENT 120000000 REL1 1\r\n"
+      },
+      {
+        "cmd": "DDS?",
+        "reply": "DDS CH0 FREQ 130000000 AMP 512\r\nDDS CH1 FREQ 120000000 AMP 0\r\nDDS CH2 FREQ 130000000 AMP 0\r\nDDS CH3 FREQ 130000000 AMP 0\r\n"
+      },
+      {
+        "cmd": "SWEEP ON",
+        "reply": "OK SWEEP ON\r\n"
+      },
+      {
+        "cmd": "SWEEP?",
+        "reply": "SWEEP MODE CW START 120000000 STOP 122000000 PERIOD_MS 2000 ENABLE 1 CURRENT 120500000 REL1 0\r\n"
+      },
+      {
+        "cmd": "DDS?",
+        "reply": "DDS CH0 FREQ 130000000 AMP 0\r\nDDS CH1 FREQ 120900000 AMP 300\r\nDDS CH2 FREQ 130000000 AMP 0\r\nDDS CH3 FREQ 130000000 AMP 0\r\n"
+      },
+      {
+        "cmd": "DDS?",
+        "reply": "DDS CH0 FREQ 130000000 AMP 0\r\nDDS CH1 FREQ 120600000 AMP 300\r\nDDS CH2 FREQ 130000000 AMP 0\r\nDDS CH3 FREQ 130000000 AMP 0\r\n"
+      },
+      {
+        "cmd": "SWEEP OFF",
+        "reply": "OK SWEEP OFF\r\n"
+      },
+      {
+        "cmd": "SWEEP?",
+        "reply": "SWEEP MODE CW START 120000000 STOP 122000000 PERIOD_MS 2000 ENABLE 0 CURRENT 120500000 REL1 0\r\n"
+      }
+    ],
+    "sweep_before": {
+      "mode": "CW",
+      "start_hz": 120000000,
+      "stop_hz": 122000000,
+      "period_ms": 2000,
+      "enabled": 0,
+      "current_hz": 120000000,
+      "rel1": 1
+    },
+    "sweep_on": {
+      "mode": "CW",
+      "start_hz": 120000000,
+      "stop_hz": 122000000,
+      "period_ms": 2000,
+      "enabled": 1,
+      "current_hz": 120500000,
+      "rel1": 0
+    },
+    "sweep_after": {
+      "mode": "CW",
+      "start_hz": 120000000,
+      "stop_hz": 122000000,
+      "period_ms": 2000,
+      "enabled": 0,
+      "current_hz": 120500000,
+      "rel1": 0
+    },
+    "dds_before": {
+      "0": {
+        "freq_hz": 130000000,
+        "amp_code": 512
+      },
+      "1": {
+        "freq_hz": 120000000,
+        "amp_code": 0
+      },
+      "2": {
+        "freq_hz": 130000000,
+        "amp_code": 0
+      },
+      "3": {
+        "freq_hz": 130000000,
+        "amp_code": 0
+      }
+    },
+    "dds_samples": [
+      {
+        "t_s": 0.0,
+        "freq_hz": 120900000,
+        "amp_code": 300
+      },
+      {
+        "t_s": 1.7726213932037354,
+        "freq_hz": 120600000,
+        "amp_code": 300
+      }
+    ],
+    "scope_samples": [
+      {
+        "t_s": 0.0,
+        "freq_hz": 37500000.0,
+        "rms_v": 0.0217562,
+        "vpp_v": 0.16
+      },
+      {
+        "t_s": 1.7726213932037354,
+        "freq_hz": 37500000.0,
+        "rms_v": 0.0217562,
+        "vpp_v": 0.16
+      }
+    ],
+    "unique_freqs": [
+      120600000,
+      120900000
+    ],
+    "observed_step_hz": 300000,
+    "freq_errors": [
+      {
+        "t_s": 0.0,
+        "measured_hz": 37500000.0,
+        "nearest_grid_hz": 120000000,
+        "error_hz": -82500000.0
+      },
+      {
+        "t_s": 1.7726213932037354,
+        "measured_hz": 37500000.0,
+        "nearest_grid_hz": 120000000,
+        "error_hz": -82500000.0
+      }
+    ],
+    "rms_span_ratio": 0.0,
+    "vpp_span_ratio": 0.0
+  },
+  "am": {
+    "result": {
+      "mode": "AM",
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "sample_rate_hz": 100000000.00005178,
+      "points": 100000,
+      "ch3_vpp_v": 0.14,
+      "ch3_rms_ac_v": 0.014614987764620264,
+      "carrier_hz": 29990000.00001553,
+      "metric_1_name": "mod_freq_hz",
+      "metric_1_value": 20000.000000010357,
+      "metric_2_name": "am_depth_pct",
+      "metric_2_value": 7.474950667663392,
+      "aux_metrics": {},
+      "pass_fail": "FAIL",
+      "notes": [
+        "AM frequency mismatch: got 20000.0 Hz",
+        "AM depth mismatch: got 7.47%"
+      ]
+    },
+    "result_dir": "F:\\CAMKE\\backups\\restore_h743_20260523_061047\\Simple_wireless_automatic_transceiver_deviceV2.0\\tools\\tx_joint_debug_results\\joint_debug_20260524_005630\\modes\\tek_ch3_accuracy_am_20260524_005638"
+  },
+  "fm": {
+    "result": {
+      "mode": "FM",
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "sample_rate_hz": 100000000.00005178,
+      "points": 100000,
+      "ch3_vpp_v": 0.14,
+      "ch3_rms_ac_v": 0.014500817950722644,
+      "carrier_hz": 50000000.00002589,
+      "metric_1_name": "mod_freq_hz",
+      "metric_1_value": 2000.0200002010374,
+      "metric_2_name": "fm_dev_hz",
+      "metric_2_value": 2719316.943277327,
+      "aux_metrics": {},
+      "pass_fail": "FAIL",
+      "notes": [
+        "FM modulation frequency mismatch: got 2000.0 Hz",
+        "FM deviation mismatch: got 2719316.9 Hz"
+      ]
+    },
+    "result_dir": "F:\\CAMKE\\backups\\restore_h743_20260523_061047\\Simple_wireless_automatic_transceiver_deviceV2.0\\tools\\tx_joint_debug_results\\joint_debug_20260524_005630\\modes\\tek_ch3_accuracy_fm_20260524_005642"
+  },
+  "ask": {
+    "result": {
+      "mode": "ASK",
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "sample_rate_hz": 100000000.00005178,
+      "points": 100000,
+      "ch3_vpp_v": 0.16,
+      "ch3_rms_ac_v": 0.01462555291399269,
+      "carrier_hz": 1000.0000000005178,
+      "metric_1_name": "bit_rate_hz",
+      "metric_1_value": 4000.1600064023273,
+      "metric_2_name": "low_high_ratio",
+      "metric_2_value": 0.9335821840294334,
+      "aux_metrics": {},
+      "pass_fail": "FAIL",
+      "notes": [
+        "ASK symbol rate mismatch: got 4000.2 Hz",
+        "ASK envelope tone estimate was 1000.0 Hz",
+        "ASK run-length estimate was 21367.5 Hz",
+        "ASK edge-rate estimate was 57091.3 Hz",
+        "ASK low/high envelope ratio too high: 0.934"
+      ]
+    },
+    "result_dir": "F:\\CAMKE\\backups\\restore_h743_20260523_061047\\Simple_wireless_automatic_transceiver_deviceV2.0\\tools\\tx_joint_debug_results\\joint_debug_20260524_005630\\modes\\tek_ch3_accuracy_ask_20260524_005648"
+  },
+  "fsk": {
+    "result": {
+      "mode": "FSK",
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "sample_rate_hz": 100000000.00005178,
+      "points": 100000,
+      "ch3_vpp_v": 0.16,
+      "ch3_rms_ac_v": 0.014524090331583592,
+      "carrier_hz": 50000000.00002589,
+      "metric_1_name": "bit_rate_hz",
+      "metric_1_value": 10500.000000005437,
+      "metric_2_name": "fsk_shift_hz",
+      "metric_2_value": 20000.00000000745,
+      "aux_metrics": {
+        "fs_iq_ds_hz": 2564102.5641038916,
+        "fsk_state0_hz": -432202.7074513547,
+        "fsk_state1_hz": 278498.8506855143,
+        "fsk_pattern_score": 1.1390612617348148,
+        "fsk_pattern_match": 0.875,
+        "fsk_shift_rf_hz": 20000.00000000745,
+        "fsk_iq_tone_rate_hz": 10500.000000005437
+      },
+      "pass_fail": "PASS",
+      "notes": [
+        "FSK I/Q symbol rate and RF peak shift are within tolerance"
+      ]
+    },
+    "result_dir": "F:\\CAMKE\\backups\\restore_h743_20260523_061047\\Simple_wireless_automatic_transceiver_deviceV2.0\\tools\\tx_joint_debug_results\\joint_debug_20260524_005630\\modes\\tek_ch3_accuracy_fsk_20260524_005652"
+  },
+  "psk": {
+    "result": {
+      "mode": "PSK",
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "sample_rate_hz": 100000000.00005178,
+      "points": 100000,
+      "ch3_vpp_v": 0.16,
+      "ch3_rms_ac_v": 0.01463016059378707,
+      "carrier_hz": 50000000.00002589,
+      "metric_1_name": "bit_rate_hz",
+      "metric_1_value": 10864.841373321575,
+      "metric_2_name": "phase_flip_deg",
+      "metric_2_value": 180.0,
+      "aux_metrics": {
+        "fs_iq_ds_hz": 1282051.2820519458,
+        "psk_pattern_score": 0.8982703172533568,
+        "psk_run_rate_hz": 25138.260432391093
+      },
+      "pass_fail": "FAIL",
+      "notes": [
+        "PSK symbol rate mismatch: got 10864.8 Hz"
+      ]
+    },
+    "result_dir": "F:\\CAMKE\\backups\\restore_h743_20260523_061047\\Simple_wireless_automatic_transceiver_deviceV2.0\\tools\\tx_joint_debug_results\\joint_debug_20260524_005630\\modes\\tek_ch3_accuracy_psk_20260524_005701"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "args": {
+    "scope": "192.168.2.28",
+    "scope_timeout": 30,
+    "mode": "AM",
+    "points": 1000000,
+    "time_scale": 0.0001,
+    "use_iq_ref": false,
+    "ch1_scale": 0.5,
+    "ch2_scale": 0.5,
+    "ch3_scale": 0.5,
+    "ch3_position": 0.0,
+    "use_50r": true,
+    "out": "F:\\CAMKE\\backups\\restore_h743_20260523_061047\\Simple_wireless_automatic_transceiver_deviceV2.0\\tools\\tx_joint_debug_results\\joint_debug_20260524_005032\\modes",
+    "port": "COM5",
+    "baudrate": 115200,
+    "line": [
+      "TXAM 130000000 512 980 0 -50 100 10000 8192 1200 500"
+    ],
+    "char_delay_ms": 15.0,
+    "settle": 0.8,
+    "mod_freq_hz": 10000.0,
+    "am_depth_pct": 50.0,
+    "fm_dev_hz": 75000.0,
+    "bit_rate_hz": 10000.0,
+    "fsk_shift_hz": 20000.0
+  },
+  "scope_meta": {
+    "idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+    "record_length": "1000000",
+    "time_scale": "80.0000E-6",
+    "sample_rate": "1.2500E+9"
+  },
+  "wave_meta": {
+    "ch3": {
+      "channel": 3,
+      "xinc": 8e-10,
+      "xzero": -0.0004,
+      "ymult": 0.02,
+      "yzero": 0.0,
+      "yoff": 0.0,
+      "points": 1000000
+    },
+    "ch1": null,
+    "ch2": null
+  },
+  "serial_log": "\r\n[WB] CH0 LO set: 130000000 Hz AMP 512\r\n[WB] USART3 send: QG 980\r\n[WB] USART3 reply: SET Q_GAIN 980\r\n\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: S\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n",
+  "result": {
+    "mode": "AM",
+    "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+    "sample_rate_hz": 1249999999.9972591,
+    "points": 1000000,
+    "ch3_vpp_v": 0.16,
+    "ch3_rms_ac_v": 0.015076298229950215,
+    "carrier_hz": 130999999.99971275,
+    "metric_1_name": "mod_freq_hz",
+    "metric_1_value": 23749.999999947922,
+    "metric_2_name": "am_depth_pct",
+    "metric_2_value": 2.143406694175183,
+    "aux_metrics": {},
+    "pass_fail": "FAIL",
+    "notes": [
+      "AM frequency mismatch: got 23750.0 Hz",
+      "AM depth mismatch: got 2.14%"
+    ]
+  }
+}
