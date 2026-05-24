@@ -1100,7 +1100,9 @@ static void App_LvglUiRefreshState(void)
   }
   else if ((g_active_section == APP_UI_SECTION_SWEEP) && (g_run_button_label != NULL))
   {
-    lv_label_set_text(g_run_button_label, "RF OUT");
+    lv_label_set_text(g_run_button_label, "SWEEP OUT");
+    lv_label_set_text(g_rf_name_label, "Sweep out");
+    lv_label_set_text(g_rf_value_label, (snapshot.basic.sweep_on != 0U) ? "START" : "OFF");
   }
 
   if (g_sweep_button_label != NULL)
@@ -1222,7 +1224,7 @@ static void App_LvglUiRefreshSectionVisibility(void)
     g_sweep_start_name_label, g_sweep_start_value_label,
     g_sweep_stop_name_label, g_sweep_stop_value_label,
     g_sweep_time_name_label, g_sweep_time_value_label,
-    g_field_button, g_digit_button, g_dec_button, g_run_button
+    g_rf_name_label, g_rf_value_label, g_field_button, g_digit_button, g_dec_button, g_run_button
   };
   lv_obj_t *show_mod_objs[] = {
     g_lo_name_label, g_lo_value_label, g_mode_name_label, g_mode_dropdown,
@@ -1378,6 +1380,14 @@ static void App_LvglUiApplySweepLayout(void)
   {
     lv_obj_align(g_sweep_time_value_label, LV_ALIGN_TOP_LEFT, 390, 230);
   }
+  if (g_rf_name_label != NULL)
+  {
+    lv_obj_align(g_rf_name_label, LV_ALIGN_TOP_LEFT, 248, 276);
+  }
+  if (g_rf_value_label != NULL)
+  {
+    lv_obj_align(g_rf_value_label, LV_ALIGN_TOP_LEFT, 390, 276);
+  }
   if (g_field_button != NULL)
   {
     lv_obj_set_size(g_field_button, 96, 44);
@@ -1403,6 +1413,21 @@ static void App_LvglUiApplySweepLayout(void)
 static void App_LvglUiRefreshModeVisibility(void)
 {
   uint8_t is_cw = App_LvglUiIsCwMode(g_ui_config.mode);
+
+  if (g_active_section == APP_UI_SECTION_SWEEP)
+  {
+    if (g_preset_name_label != NULL) { lv_obj_add_flag(g_preset_name_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_preset_value_label != NULL) { lv_obj_add_flag(g_preset_value_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_preset_save_button != NULL) { lv_obj_add_flag(g_preset_save_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_preset_recall_button != NULL) { lv_obj_add_flag(g_preset_recall_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_button != NULL) { lv_obj_add_flag(g_sweep_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_time_button != NULL) { lv_obj_add_flag(g_sweep_time_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_start_button != NULL) { lv_obj_add_flag(g_sweep_start_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_stop_button != NULL) { lv_obj_add_flag(g_sweep_stop_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_edit_label != NULL) { lv_obj_add_flag(g_edit_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_state_label != NULL) { lv_obj_add_flag(g_state_label, LV_OBJ_FLAG_HIDDEN); }
+    return;
+  }
 
   if (g_preset_name_label != NULL)
   {
@@ -2155,7 +2180,7 @@ static void App_LvglUiOnSweepClicked(lv_event_t *e)
   g_lo_freq_hz = snapshot.basic.freq_hz;
   g_lo_freq_dirty = 0U;
   g_mode_dirty = 0U;
-  App_LvglUiSetActiveSection((snapshot.basic.sweep_on != 0U) ? APP_UI_SECTION_SWEEP : APP_UI_SECTION_SINGLE);
+  App_LvglUiSetActiveSection(APP_UI_SECTION_SWEEP);
   g_sweep_period_ms = App_TxControl_GetSweepPeriodMs();
   g_sweep_start_hz = App_TxControl_GetSweepStartHz();
   g_sweep_stop_hz = App_TxControl_GetSweepStopHz();
@@ -2280,6 +2305,7 @@ static void App_LvglUiOnContinuousClicked(lv_event_t *e)
   App_LvglUiResetModeConfig(APP_DAC_WAVE_MODE_CW);
   (void)App_TxControl_SetMode(APP_DAC_WAVE_MODE_CW);
   (void)App_TxControl_SetSweepEnabled(0U);
+  (void)App_TxControl_Stop();
   App_LvglUiSetActiveSection(APP_UI_SECTION_SINGLE);
   g_mode_dirty = 1U;
   g_selected_field = APP_UI_DEFAULT_FIELD;
@@ -2302,6 +2328,8 @@ static void App_LvglUiOnSweepSectionClicked(lv_event_t *e)
 
   App_LvglUiResetModeConfig(APP_DAC_WAVE_MODE_CW);
   (void)App_TxControl_SetMode(APP_DAC_WAVE_MODE_CW);
+  (void)App_TxControl_SetSweepEnabled(0U);
+  (void)App_TxControl_Stop();
   App_LvglUiSetActiveSection(APP_UI_SECTION_SWEEP);
   g_mode_dirty = 1U;
   App_LvglUiEnsureEditableField();
@@ -2330,6 +2358,7 @@ static void App_LvglUiOnModClicked(lv_event_t *e)
   }
 
   (void)App_TxControl_SetSweepEnabled(0U);
+  (void)App_TxControl_Stop();
   App_LvglUiSetActiveSection(APP_UI_SECTION_MOD);
   App_LvglUiEnsureEditableField();
   App_LvglUiRefreshValues();
@@ -2340,6 +2369,8 @@ static void App_LvglUiOnModClicked(lv_event_t *e)
 static void App_LvglUiOnSystemClicked(lv_event_t *e)
 {
   (void)e;
+  (void)App_TxControl_SetSweepEnabled(0U);
+  (void)App_TxControl_Stop();
   App_LvglUiSetActiveSection(APP_UI_SECTION_SYSTEM);
   App_LvglUiRefreshValues();
   App_LvglUiRefreshState();
