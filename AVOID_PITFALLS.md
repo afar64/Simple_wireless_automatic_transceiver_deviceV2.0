@@ -19,3 +19,6 @@ Update it after each completed task.
 - When adding the left-side `Continuous`, `Sweep`, `Mod`, and `System` buttons, keep the first step as a navigation skeleton. Do not move all controls into pages in the same change, or hardware touch regressions become hard to isolate.
 - Left-side buttons need enough fixed width for the longest label (`Continuous`); shift the content rows right instead of squeezing the label into the old `x=36` row area.
 - Keep old bottom controls available while validating the new section buttons so there is still a known-good fallback path for Apply/Start/Field/Digit.
+- For the H743 signal-source UI, treat `Single / Sweep / Mod / System` as explicit sections, not just temporary highlights derived from runtime state. Otherwise the UI can jump between sections unexpectedly while the user is interacting.
+- `System` should be a view switch, not the same action as toggling debug mode. Keep debug enable/disable as a separate control inside the system section.
+- To keep the UI fast, hide whole groups of unrelated controls per section instead of leaving every label and button visible and updating all of them every cycle.

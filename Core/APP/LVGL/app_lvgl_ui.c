@@ -22,7 +22,17 @@
 #define APP_UI_SECTION_BUTTON_H 34
 #define APP_UI_CONTENT_LABEL_X 156
 #define APP_UI_CONTENT_VALUE_X 286
+
+typedef enum
+{
+  APP_UI_SECTION_SINGLE = 0,
+  APP_UI_SECTION_SWEEP,
+  APP_UI_SECTION_MOD,
+  APP_UI_SECTION_SYSTEM
+} AppUiSection;
+
 static lv_obj_t *g_mode_dropdown = NULL;
+static lv_obj_t *g_mode_name_label = NULL;
 static lv_obj_t *g_continuous_button = NULL;
 static lv_obj_t *g_sweep_section_button = NULL;
 static lv_obj_t *g_mod_button = NULL;
@@ -58,6 +68,12 @@ static lv_obj_t *g_sweep_start_button = NULL;
 static lv_obj_t *g_sweep_stop_button = NULL;
 static lv_obj_t *g_debug_button = NULL;
 static lv_obj_t *g_debug_button_label = NULL;
+static lv_obj_t *g_field_button = NULL;
+static lv_obj_t *g_digit_button = NULL;
+static lv_obj_t *g_dec_button = NULL;
+static lv_obj_t *g_inc_button = NULL;
+static lv_obj_t *g_apply_button = NULL;
+static lv_obj_t *g_run_button = NULL;
 
 static AppDacWavegenConfig g_ui_config;
 static uint32_t g_lo_freq_hz = APP_AD9959_TASK_DEFAULT_FREQ_HZ;
@@ -70,6 +86,7 @@ static uint8_t g_digit_index = APP_UI_DEFAULT_DIGIT_INDEX;
 static uint8_t g_lo_freq_dirty = 0U;
 static uint8_t g_mode_dirty = 0U;
 static uint32_t g_state_refresh_last_tick_ms = 0U;
+static AppUiSection g_active_section = APP_UI_SECTION_SINGLE;
 
 static const uint32_t s_lo_steps_hz[] = {APP_TX_CONTROL_FREQ_STEP_HZ};
 static const uint32_t s_amp_steps_mv[] = {APP_UI_AMP_RMS_STEP_MV};
@@ -105,6 +122,8 @@ static void App_LvglUiRefreshValues(void);
 static void App_LvglUiRefreshEditState(void);
 static void App_LvglUiRefreshState(void);
 static void App_LvglUiRefreshSectionButtons(const AppTxControlSnapshot *snapshot, uint8_t debug_locked);
+static void App_LvglUiRefreshSectionVisibility(void);
+static void App_LvglUiSetActiveSection(AppUiSection section);
 static void App_LvglUiRefreshModeVisibility(void);
 static uint8_t App_LvglUiIsFieldEditable(AppUiEditField field);
 static const char *App_LvglUiFieldName(AppUiEditField field);
@@ -163,6 +182,8 @@ void App_LvglUiInit(void)
   g_sweep_period_ms = App_TxControl_GetSweepPeriodMs();
   g_sweep_start_hz = App_TxControl_GetSweepStartHz();
   g_sweep_stop_hz = App_TxControl_GetSweepStopHz();
+  g_active_section = (snapshot.basic.sweep_on != 0U) ? APP_UI_SECTION_SWEEP :
+                     ((App_LvglUiIsCwMode(snapshot.basic.mode) != 0U) ? APP_UI_SECTION_SINGLE : APP_UI_SECTION_MOD);
 
   panel = App_LvglUiCreatePanel(screen);
   App_LvglUiCreateTitle(panel);
@@ -302,18 +323,18 @@ static void App_LvglUiCreateTitle(lv_obj_t *parent)
   lv_obj_t *title = lv_label_create(parent);
   lv_obj_t *subtitle = lv_label_create(parent);
 
-  lv_label_set_text(title, "IQ Modulator");
+  lv_label_set_text(title, "Signal Source");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
   lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 20);
 
-  lv_label_set_text(subtitle, "DAC1_OUT1 = I / DAC1_OUT2 = Q");
+  lv_label_set_text(subtitle, "Fast local control on STM32H743");
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0xBFC7D5), 0);
   lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
 }
 
 static void App_LvglUiCreateSectionButtons(lv_obj_t *parent)
 {
-  g_continuous_button = App_LvglUiCreateSectionButton(parent, "Continuous", 74, App_LvglUiOnContinuousClicked);
+  g_continuous_button = App_LvglUiCreateSectionButton(parent, "Single", 74, App_LvglUiOnContinuousClicked);
   g_sweep_section_button = App_LvglUiCreateSectionButton(parent, "Sweep", 116, App_LvglUiOnSweepSectionClicked);
   g_mod_button = App_LvglUiCreateSectionButton(parent, "Mod", 158, App_LvglUiOnModClicked);
   g_system_button = App_LvglUiCreateSectionButton(parent, "System", 200, App_LvglUiOnSystemClicked);
@@ -338,12 +359,12 @@ static lv_obj_t *App_LvglUiCreateSectionButton(lv_obj_t *parent,
 
 static void App_LvglUiCreateModeRow(lv_obj_t *parent, AppDacWavegenMode mode, int32_t y)
 {
-  lv_obj_t *name_label = lv_label_create(parent);
+  g_mode_name_label = lv_label_create(parent);
 
-  lv_label_set_text(name_label, "Mode");
-  lv_obj_set_width(name_label, APP_UI_LABEL_W);
-  lv_obj_set_style_text_color(name_label, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(name_label, LV_ALIGN_TOP_LEFT, APP_UI_CONTENT_LABEL_X, y + 6);
+  lv_label_set_text(g_mode_name_label, "Mode");
+  lv_obj_set_width(g_mode_name_label, APP_UI_LABEL_W);
+  lv_obj_set_style_text_color(g_mode_name_label, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_align(g_mode_name_label, LV_ALIGN_TOP_LEFT, APP_UI_CONTENT_LABEL_X, y + 6);
 
   g_mode_dropdown = lv_dropdown_create(parent);
   lv_obj_set_width(g_mode_dropdown, 180);
@@ -452,22 +473,47 @@ static void App_LvglUiCreateSweepRangeBadge(lv_obj_t *parent)
 
 static void App_LvglUiCreateButtons(lv_obj_t *parent)
 {
-  lv_obj_t *field_button = lv_button_create(parent);
-  lv_obj_t *field_label = lv_label_create(field_button);
-  lv_obj_t *digit_button = lv_button_create(parent);
-  lv_obj_t *digit_label = lv_label_create(digit_button);
-  lv_obj_t *dec_button = lv_button_create(parent);
-  lv_obj_t *dec_label = lv_label_create(dec_button);
-  lv_obj_t *inc_button = lv_button_create(parent);
-  lv_obj_t *inc_label = lv_label_create(inc_button);
+  g_field_button = lv_button_create(parent);
+  {
+    lv_obj_t *field_label = lv_label_create(g_field_button);
+    lv_obj_set_size(g_field_button, 92, 42);
+    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 36, -24);
+    lv_obj_add_event_cb(g_field_button, App_LvglUiOnFieldClicked, LV_EVENT_CLICKED, NULL);
+    lv_label_set_text(field_label, "Field");
+    lv_obj_center(field_label);
+  }
+  g_digit_button = lv_button_create(parent);
+  {
+    lv_obj_t *digit_label = lv_label_create(g_digit_button);
+    lv_obj_set_size(g_digit_button, 84, 42);
+    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 140, -24);
+    lv_obj_add_event_cb(g_digit_button, App_LvglUiOnDigitClicked, LV_EVENT_CLICKED, NULL);
+    lv_label_set_text(digit_label, "Step");
+    lv_obj_center(digit_label);
+  }
+  g_dec_button = lv_button_create(parent);
+  {
+    lv_obj_t *dec_label = lv_label_create(g_dec_button);
+    lv_obj_set_size(g_dec_button, 60, 42);
+    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 240, -24);
+    lv_obj_add_event_cb(g_dec_button, App_LvglUiOnDecClicked, LV_EVENT_CLICKED, NULL);
+    lv_label_set_text(dec_label, "-");
+    lv_obj_center(dec_label);
+  }
+  g_inc_button = lv_button_create(parent);
+  {
+    lv_obj_t *inc_label = lv_label_create(g_inc_button);
+    lv_obj_set_size(g_inc_button, 60, 42);
+    lv_obj_align(g_inc_button, LV_ALIGN_BOTTOM_LEFT, 316, -24);
+    lv_obj_add_event_cb(g_inc_button, App_LvglUiOnIncClicked, LV_EVENT_CLICKED, NULL);
+    lv_label_set_text(inc_label, "+");
+    lv_obj_center(inc_label);
+  }
   lv_obj_t *preset_save_label;
   lv_obj_t *preset_recall_label;
   lv_obj_t *sweep_time_label;
   lv_obj_t *sweep_start_label;
   lv_obj_t *sweep_stop_label;
-  lv_obj_t *apply_button = lv_button_create(parent);
-  lv_obj_t *apply_label = lv_label_create(apply_button);
-  lv_obj_t *run_button = lv_button_create(parent);
 
   g_edit_label = lv_label_create(parent);
   lv_obj_set_width(g_edit_label, 460);
@@ -510,30 +556,6 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
   lv_label_set_text(sweep_stop_label, "SetStop");
   lv_obj_center(sweep_stop_label);
 
-  lv_obj_set_size(field_button, 92, 42);
-  lv_obj_align(field_button, LV_ALIGN_BOTTOM_LEFT, 36, -24);
-  lv_obj_add_event_cb(field_button, App_LvglUiOnFieldClicked, LV_EVENT_CLICKED, NULL);
-  lv_label_set_text(field_label, "Field");
-  lv_obj_center(field_label);
-
-  lv_obj_set_size(digit_button, 84, 42);
-  lv_obj_align(digit_button, LV_ALIGN_BOTTOM_LEFT, 140, -24);
-  lv_obj_add_event_cb(digit_button, App_LvglUiOnDigitClicked, LV_EVENT_CLICKED, NULL);
-  lv_label_set_text(digit_label, "Digit");
-  lv_obj_center(digit_label);
-
-  lv_obj_set_size(dec_button, 60, 42);
-  lv_obj_align(dec_button, LV_ALIGN_BOTTOM_LEFT, 240, -24);
-  lv_obj_add_event_cb(dec_button, App_LvglUiOnDecClicked, LV_EVENT_CLICKED, NULL);
-  lv_label_set_text(dec_label, "-");
-  lv_obj_center(dec_label);
-
-  lv_obj_set_size(inc_button, 60, 42);
-  lv_obj_align(inc_button, LV_ALIGN_BOTTOM_LEFT, 316, -24);
-  lv_obj_add_event_cb(inc_button, App_LvglUiOnIncClicked, LV_EVENT_CLICKED, NULL);
-  lv_label_set_text(inc_label, "+");
-  lv_obj_center(inc_label);
-
   g_preset_save_button = lv_button_create(parent);
   preset_save_label = lv_label_create(g_preset_save_button);
   lv_obj_set_size(g_preset_save_button, 78, 42);
@@ -550,16 +572,21 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
   lv_label_set_text(preset_recall_label, "Recall");
   lv_obj_center(preset_recall_label);
 
-  lv_obj_set_size(apply_button, 66, 42);
-  lv_obj_align(apply_button, LV_ALIGN_BOTTOM_LEFT, 572, -24);
-  lv_obj_add_event_cb(apply_button, App_LvglUiOnApplyClicked, LV_EVENT_CLICKED, NULL);
-  lv_label_set_text(apply_label, "Apply");
-  lv_obj_center(apply_label);
+  g_apply_button = lv_button_create(parent);
+  {
+    lv_obj_t *apply_label = lv_label_create(g_apply_button);
+    lv_obj_set_size(g_apply_button, 66, 42);
+    lv_obj_align(g_apply_button, LV_ALIGN_BOTTOM_LEFT, 572, -24);
+    lv_obj_add_event_cb(g_apply_button, App_LvglUiOnApplyClicked, LV_EVENT_CLICKED, NULL);
+    lv_label_set_text(apply_label, "Apply");
+    lv_obj_center(apply_label);
+  }
 
-  lv_obj_set_size(run_button, 60, 42);
-  lv_obj_align(run_button, LV_ALIGN_BOTTOM_LEFT, 650, -24);
-  lv_obj_add_event_cb(run_button, App_LvglUiOnRunClicked, LV_EVENT_CLICKED, NULL);
-  g_run_button_label = lv_label_create(run_button);
+  g_run_button = lv_button_create(parent);
+  lv_obj_set_size(g_run_button, 60, 42);
+  lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 650, -24);
+  lv_obj_add_event_cb(g_run_button, App_LvglUiOnRunClicked, LV_EVENT_CLICKED, NULL);
+  g_run_button_label = lv_label_create(g_run_button);
   lv_obj_center(g_run_button_label);
 }
 
@@ -603,6 +630,7 @@ static void App_LvglUiRefreshValues(void)
   AppDacWavegenMode mode = g_ui_config.mode;
 
   App_LvglUiRefreshModeVisibility();
+  App_LvglUiRefreshSectionVisibility();
   if (g_mode_dropdown != NULL)
   {
     lv_dropdown_set_selected(g_mode_dropdown, (uint16_t)mode);
@@ -804,6 +832,12 @@ static void App_LvglUiRefreshState(void)
   dds_status = AppDDS_GetStatus();
   App_LvglUiRefreshSectionButtons(&snapshot, debug_locked);
 
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    lv_label_set_text(g_state_label, "System status");
+    return;
+  }
+
   if (debug_locked != 0U)
   {
     if (snapshot.basic.sweep_on != 0U)
@@ -894,21 +928,24 @@ static void App_LvglUiRefreshSectionButtons(const AppTxControlSnapshot *snapshot
   };
   uint32_t i;
 
-  if ((snapshot == NULL) || (debug_locked != 0U))
+  (void)snapshot;
+  (void)debug_locked;
+
+  switch (g_active_section)
   {
-    active_button = g_system_button;
-  }
-  else if (snapshot->basic.sweep_on != 0U)
-  {
-    active_button = g_sweep_section_button;
-  }
-  else if (App_LvglUiIsCwMode(snapshot->basic.mode) != 0U)
-  {
-    active_button = g_continuous_button;
-  }
-  else
-  {
-    active_button = g_mod_button;
+    case APP_UI_SECTION_SINGLE:
+      active_button = g_continuous_button;
+      break;
+    case APP_UI_SECTION_SWEEP:
+      active_button = g_sweep_section_button;
+      break;
+    case APP_UI_SECTION_MOD:
+      active_button = g_mod_button;
+      break;
+    case APP_UI_SECTION_SYSTEM:
+    default:
+      active_button = g_system_button;
+      break;
   }
 
   for (i = 0U; i < (uint32_t)(sizeof(buttons) / sizeof(buttons[0])); i++)
@@ -928,6 +965,93 @@ static void App_LvglUiRefreshSectionButtons(const AppTxControlSnapshot *snapshot
     {
       lv_obj_set_style_bg_color(buttons[i], lv_color_hex(0x374151), 0);
       lv_obj_set_style_border_width(buttons[i], 0, 0);
+    }
+  }
+}
+
+static void App_LvglUiSetActiveSection(AppUiSection section)
+{
+  g_active_section = section;
+}
+
+static void App_LvglUiRefreshSectionVisibility(void)
+{
+  uint8_t show_single = (g_active_section == APP_UI_SECTION_SINGLE) ? 1U : 0U;
+  uint8_t show_sweep = (g_active_section == APP_UI_SECTION_SWEEP) ? 1U : 0U;
+  uint8_t show_mod = (g_active_section == APP_UI_SECTION_MOD) ? 1U : 0U;
+  uint8_t show_system = (g_active_section == APP_UI_SECTION_SYSTEM) ? 1U : 0U;
+  lv_obj_t *show_single_objs[] = {
+    g_lo_name_label, g_lo_value_label, g_vpp_name_label, g_vpp_value_label,
+    g_preset_name_label, g_preset_value_label, g_preset_save_button, g_preset_recall_button,
+    g_field_button, g_digit_button, g_dec_button, g_inc_button, g_apply_button, g_run_button,
+    g_edit_label, g_state_label
+  };
+  lv_obj_t *show_sweep_objs[] = {
+    g_lo_name_label, g_lo_value_label, g_vpp_name_label, g_vpp_value_label,
+    g_sweep_time_name_label, g_sweep_time_value_label, g_sweep_start_name_label, g_sweep_start_value_label,
+    g_sweep_stop_name_label, g_sweep_stop_value_label, g_sweep_button, g_sweep_time_button,
+    g_sweep_start_button, g_sweep_stop_button, g_field_button, g_digit_button, g_dec_button,
+    g_inc_button, g_apply_button, g_run_button, g_edit_label, g_state_label
+  };
+  lv_obj_t *show_mod_objs[] = {
+    g_lo_name_label, g_lo_value_label, g_mode_name_label, g_mode_dropdown,
+    g_vpp_name_label, g_vpp_value_label, g_rate_name_label, g_rate_value_label,
+    g_param_name_label, g_param_value_label, g_field_button, g_digit_button,
+    g_dec_button, g_inc_button, g_apply_button, g_run_button, g_edit_label, g_state_label
+  };
+  lv_obj_t *show_system_objs[] = {
+    g_debug_status_label, g_debug_button, g_ad9959_status_label, g_f429_status_label, g_state_label
+  };
+  lv_obj_t *all_objs[] = {
+    g_lo_name_label, g_lo_value_label, g_mode_name_label, g_mode_dropdown,
+    g_vpp_name_label, g_vpp_value_label, g_rate_name_label, g_rate_value_label,
+    g_param_name_label, g_param_value_label, g_preset_name_label, g_preset_value_label,
+    g_debug_status_label, g_debug_button, g_ad9959_status_label, g_f429_status_label,
+    g_sweep_time_name_label, g_sweep_time_value_label, g_sweep_start_name_label, g_sweep_start_value_label,
+    g_sweep_stop_name_label, g_sweep_stop_value_label, g_edit_label, g_state_label,
+    g_preset_save_button, g_preset_recall_button, g_sweep_button, g_sweep_time_button,
+    g_sweep_start_button, g_sweep_stop_button, g_field_button, g_digit_button, g_dec_button,
+    g_inc_button, g_apply_button, g_run_button
+  };
+  uint32_t i;
+
+  for (i = 0U; i < (uint32_t)(sizeof(all_objs) / sizeof(all_objs[0])); i++)
+  {
+    if (all_objs[i] != NULL)
+    {
+      lv_obj_add_flag(all_objs[i], LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+
+  if (show_single != 0U)
+  {
+    for (i = 0U; i < (uint32_t)(sizeof(show_single_objs) / sizeof(show_single_objs[0])); i++)
+    {
+      if (show_single_objs[i] != NULL) { lv_obj_clear_flag(show_single_objs[i], LV_OBJ_FLAG_HIDDEN); }
+    }
+  }
+
+  if (show_sweep != 0U)
+  {
+    for (i = 0U; i < (uint32_t)(sizeof(show_sweep_objs) / sizeof(show_sweep_objs[0])); i++)
+    {
+      if (show_sweep_objs[i] != NULL) { lv_obj_clear_flag(show_sweep_objs[i], LV_OBJ_FLAG_HIDDEN); }
+    }
+  }
+
+  if (show_mod != 0U)
+  {
+    for (i = 0U; i < (uint32_t)(sizeof(show_mod_objs) / sizeof(show_mod_objs[0])); i++)
+    {
+      if (show_mod_objs[i] != NULL) { lv_obj_clear_flag(show_mod_objs[i], LV_OBJ_FLAG_HIDDEN); }
+    }
+  }
+
+  if (show_system != 0U)
+  {
+    for (i = 0U; i < (uint32_t)(sizeof(show_system_objs) / sizeof(show_system_objs[0])); i++)
+    {
+      if (show_system_objs[i] != NULL) { lv_obj_clear_flag(show_system_objs[i], LV_OBJ_FLAG_HIDDEN); }
     }
   }
 }
@@ -1298,6 +1422,7 @@ static void App_LvglUiOnModeChanged(lv_event_t *e)
   mode = (AppDacWavegenMode)lv_dropdown_get_selected(g_mode_dropdown);
   App_LvglUiResetModeConfig(mode);
   (void)App_TxControl_SetMode(mode);
+  App_LvglUiSetActiveSection((mode == APP_DAC_WAVE_MODE_CW) ? APP_UI_SECTION_SINGLE : APP_UI_SECTION_MOD);
   g_mode_dirty = 1U;
   g_selected_field = APP_UI_DEFAULT_FIELD;
   g_digit_index = APP_UI_DEFAULT_DIGIT_INDEX;
@@ -1432,6 +1557,7 @@ static void App_LvglUiOnSweepClicked(lv_event_t *e)
   g_lo_freq_hz = snapshot.basic.freq_hz;
   g_lo_freq_dirty = 0U;
   g_mode_dirty = 0U;
+  App_LvglUiSetActiveSection((snapshot.basic.sweep_on != 0U) ? APP_UI_SECTION_SWEEP : APP_UI_SECTION_SINGLE);
   g_sweep_period_ms = App_TxControl_GetSweepPeriodMs();
   g_sweep_start_hz = App_TxControl_GetSweepStartHz();
   g_sweep_stop_hz = App_TxControl_GetSweepStopHz();
@@ -1550,6 +1676,7 @@ static void App_LvglUiOnContinuousClicked(lv_event_t *e)
   App_LvglUiResetModeConfig(APP_DAC_WAVE_MODE_CW);
   (void)App_TxControl_SetMode(APP_DAC_WAVE_MODE_CW);
   (void)App_TxControl_SetSweepEnabled(0U);
+  App_LvglUiSetActiveSection(APP_UI_SECTION_SINGLE);
   g_mode_dirty = 1U;
   g_selected_field = APP_UI_DEFAULT_FIELD;
   g_digit_index = APP_UI_DEFAULT_DIGIT_INDEX;
@@ -1561,7 +1688,22 @@ static void App_LvglUiOnContinuousClicked(lv_event_t *e)
 
 static void App_LvglUiOnSweepSectionClicked(lv_event_t *e)
 {
-  App_LvglUiOnSweepClicked(e);
+  (void)e;
+
+  if (App_LvglUiIsDebugLocked() != 0U)
+  {
+    App_LvglUiRefreshState();
+    return;
+  }
+
+  App_LvglUiResetModeConfig(APP_DAC_WAVE_MODE_CW);
+  (void)App_TxControl_SetMode(APP_DAC_WAVE_MODE_CW);
+  App_LvglUiSetActiveSection(APP_UI_SECTION_SWEEP);
+  g_mode_dirty = 1U;
+  App_LvglUiEnsureEditableField();
+  App_LvglUiRefreshValues();
+  App_LvglUiRefreshEditState();
+  App_LvglUiRefreshState();
 }
 
 static void App_LvglUiOnModClicked(lv_event_t *e)
@@ -1584,6 +1726,7 @@ static void App_LvglUiOnModClicked(lv_event_t *e)
   }
 
   (void)App_TxControl_SetSweepEnabled(0U);
+  App_LvglUiSetActiveSection(APP_UI_SECTION_MOD);
   App_LvglUiEnsureEditableField();
   App_LvglUiRefreshValues();
   App_LvglUiRefreshEditState();
@@ -1592,7 +1735,10 @@ static void App_LvglUiOnModClicked(lv_event_t *e)
 
 static void App_LvglUiOnSystemClicked(lv_event_t *e)
 {
-  App_LvglUiOnDebugClicked(e);
+  (void)e;
+  App_LvglUiSetActiveSection(APP_UI_SECTION_SYSTEM);
+  App_LvglUiRefreshValues();
+  App_LvglUiRefreshState();
 }
 
 static int App_LvglUiSendCurrentModeToWinner(void)
