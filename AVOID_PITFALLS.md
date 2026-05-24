@@ -16,3 +16,6 @@ Update it after each completed task.
 - Keep `lv_timer_handler()` running every LVGL task cycle. Throttle non-UI synchronization around it instead of slowing the LVGL handler itself.
 - Do not refresh LVGL labels on every loop when no state changed; repeated `lv_label_set_text*()` calls can add redraw pressure and make touch latency harder to diagnose.
 - After each UI step, build and flash the exact ELF from `build/codex-flash-20260525` before judging hardware touch behavior.
+- When adding the left-side `Continuous`, `Sweep`, `Mod`, and `System` buttons, keep the first step as a navigation skeleton. Do not move all controls into pages in the same change, or hardware touch regressions become hard to isolate.
+- Left-side buttons need enough fixed width for the longest label (`Continuous`); shift the content rows right instead of squeezing the label into the old `x=36` row area.
+- Keep old bottom controls available while validating the new section buttons so there is still a known-good fallback path for Apply/Start/Field/Digit.
