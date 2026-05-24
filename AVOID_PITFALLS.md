@@ -24,3 +24,9 @@ Update it after each completed task.
 - To keep the UI fast, hide whole groups of unrelated controls per section instead of leaving every label and button visible and updating all of them every cycle.
 - When matching a hardware photo/reference layout, prioritize geometry first: section positions, spacing, visible controls, and labels. Color and font tuning can come after the interaction path is stable on the board.
 - Do not assume larger LVGL Montserrat fonts are enabled in `lv_conf.h`. This project currently does not expose `lv_font_montserrat_20/24`, so layout changes should avoid depending on unavailable font assets unless you explicitly enable them first.
+- When switching the H743 UI to a blue theme, keep the palette centralized as constants in `app_lvgl_ui.c`. Do not scatter new `lv_color_hex(...)` values throughout refresh code, or later tuning becomes tedious and inconsistent.
+- For the `Single` page, keep only the two core controls in the center: `LO Freq` and `Amp`. Extra controls on this page make the interaction path longer and reduce scan speed on the H743 screen.
+- On the `Single` page, bottom buttons should map directly to fields such as `FREQ` and `AMP`, instead of using generic `Field / Digit` cycling. Direct selection is faster and matches the instrument-style workflow better.
+- This H743 UI should be a fixed control surface, not a sliding page. Explicitly remove `LV_OBJ_FLAG_SCROLLABLE` and turn scrollbars off on both the screen and the root panel, otherwise touch drags can still be interpreted as scroll gestures later.
+- After each UI change on this project, explicitly report whether compile and flash were actually run, plus whether verification and MCU reset succeeded. Do not assume a brief summary is enough.
+- Working rule for this repository: after every code change, always run one compile and one flash before closing the task, even if the build is incremental and reports `ninja: no work to do`.

@@ -22,6 +22,16 @@
 #define APP_UI_SECTION_BUTTON_H 56
 #define APP_UI_CONTENT_LABEL_X 250
 #define APP_UI_CONTENT_VALUE_X 394
+#define APP_UI_COLOR_BG           0x101622
+#define APP_UI_COLOR_PANEL        0x1E2A3A
+#define APP_UI_COLOR_PANEL_BORDER 0x78B8FF
+#define APP_UI_COLOR_TEXT_MAIN    0xF5FBFF
+#define APP_UI_COLOR_TEXT_SUB     0xB8D8FF
+#define APP_UI_COLOR_TEXT_VALUE   0xDCEEFF
+#define APP_UI_COLOR_TEXT_MUTED   0x6F86A6
+#define APP_UI_COLOR_BUTTON_IDLE  0x2A3E57
+#define APP_UI_COLOR_BUTTON_ON    0x3EA9FF
+#define APP_UI_COLOR_ACCENT       0x66C7FF
 
 typedef enum
 {
@@ -134,13 +144,12 @@ static uint32_t App_LvglUiGetFieldStepValue(AppUiEditField field, uint8_t index)
 static void App_LvglUiGetFieldRange(AppUiEditField field, uint32_t *min_value, uint32_t *max_value);
 static uint32_t App_LvglUiGetFieldValue(AppUiEditField field);
 static void App_LvglUiSetFieldValue(AppUiEditField field, uint32_t value);
-static void App_LvglUiCycleField(void);
-static void App_LvglUiCycleDigit(void);
 static void App_LvglUiAdjustSelectedField(int32_t direction);
 static void App_LvglUiApplyConfig(void);
 static void App_LvglUiOnModeChanged(lv_event_t *e);
 static void App_LvglUiOnFieldClicked(lv_event_t *e);
 static void App_LvglUiOnDigitClicked(lv_event_t *e);
+static void App_LvglUiSelectField(AppUiEditField field);
 static void App_LvglUiOnDecClicked(lv_event_t *e);
 static void App_LvglUiOnIncClicked(lv_event_t *e);
 static void App_LvglUiOnPresetSaveClicked(lv_event_t *e);
@@ -173,8 +182,10 @@ void App_LvglUiInit(void)
   lv_obj_t *panel;
   AppTxControlSnapshot snapshot;
 
-  lv_obj_set_style_bg_color(screen, lv_color_hex(0x101216), 0);
+  lv_obj_set_style_bg_color(screen, lv_color_hex(APP_UI_COLOR_BG), 0);
   lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+  lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
 
   App_TxControl_Init();
   App_TxControl_GetSnapshot(&snapshot);
@@ -310,9 +321,11 @@ static lv_obj_t *App_LvglUiCreatePanel(lv_obj_t *parent)
 
   lv_obj_set_size(panel, APP_UI_PANEL_W, APP_UI_PANEL_H);
   lv_obj_center(panel);
-  lv_obj_set_style_bg_color(panel, lv_color_hex(0x20242B), 0);
+  lv_obj_remove_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_style_bg_color(panel, lv_color_hex(APP_UI_COLOR_PANEL), 0);
   lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_color(panel, lv_color_hex(0x4E5968), 0);
+  lv_obj_set_style_border_color(panel, lv_color_hex(APP_UI_COLOR_PANEL_BORDER), 0);
   lv_obj_set_style_border_width(panel, 2, 0);
   lv_obj_set_style_radius(panel, 8, 0);
   lv_obj_set_style_shadow_width(panel, 0, 0);
@@ -326,15 +339,15 @@ static void App_LvglUiCreateTitle(lv_obj_t *parent)
   lv_obj_t *subtitle = lv_label_create(parent);
 
   lv_label_set_text(title, "IQ Modulator");
-  lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_set_style_text_color(title, lv_color_hex(APP_UI_COLOR_TEXT_MAIN), 0);
   lv_obj_align(title, LV_ALIGN_TOP_RIGHT, -26, 18);
 
   lv_label_set_text(subtitle, "DAC1_OUT1 = I / DAC1_OUT2 = Q");
-  lv_obj_set_style_text_color(subtitle, lv_color_hex(0xBFC7D5), 0);
+  lv_obj_set_style_text_color(subtitle, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_RIGHT, 0, 8);
 
   g_section_title_label = lv_label_create(parent);
-  lv_obj_set_style_text_color(g_section_title_label, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_set_style_text_color(g_section_title_label, lv_color_hex(APP_UI_COLOR_TEXT_MAIN), 0);
   lv_obj_align(g_section_title_label, LV_ALIGN_TOP_LEFT, 250, 88);
 }
 
@@ -359,11 +372,11 @@ static lv_obj_t *App_LvglUiCreateSectionButton(lv_obj_t *parent,
   lv_obj_add_event_cb(button, event_cb, LV_EVENT_CLICKED, NULL);
   lv_label_set_text(label, text);
   lv_obj_set_style_radius(button, 16, 0);
-  lv_obj_set_style_bg_color(button, lv_color_hex(0x334155), 0);
+  lv_obj_set_style_bg_color(button, lv_color_hex(APP_UI_COLOR_BUTTON_IDLE), 0);
   lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
   lv_obj_set_style_shadow_width(button, 0, 0);
   lv_obj_set_style_border_width(button, 0, 0);
-  lv_obj_set_style_text_color(label, lv_color_hex(0xF8FAFC), 0);
+  lv_obj_set_style_text_color(label, lv_color_hex(APP_UI_COLOR_TEXT_MAIN), 0);
   lv_obj_center(label);
 
   return button;
@@ -375,7 +388,7 @@ static void App_LvglUiCreateModeRow(lv_obj_t *parent, AppDacWavegenMode mode, in
 
   lv_label_set_text(g_mode_name_label, "Mode");
   lv_obj_set_width(g_mode_name_label, APP_UI_LABEL_W);
-  lv_obj_set_style_text_color(g_mode_name_label, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_set_style_text_color(g_mode_name_label, lv_color_hex(APP_UI_COLOR_TEXT_MAIN), 0);
   lv_obj_align(g_mode_name_label, LV_ALIGN_TOP_LEFT, APP_UI_CONTENT_LABEL_X, y + 10);
 
   g_mode_dropdown = lv_dropdown_create(parent);
@@ -395,12 +408,12 @@ static void App_LvglUiCreateValueRow(lv_obj_t *parent,
   *name_label = lv_label_create(parent);
   lv_label_set_text(*name_label, name);
   lv_obj_set_width(*name_label, APP_UI_LABEL_W);
-  lv_obj_set_style_text_color(*name_label, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_set_style_text_color(*name_label, lv_color_hex(APP_UI_COLOR_TEXT_MAIN), 0);
   lv_obj_align(*name_label, LV_ALIGN_TOP_LEFT, APP_UI_CONTENT_LABEL_X, y);
 
   *value_label = lv_label_create(parent);
   lv_obj_set_width(*value_label, 220);
-  lv_obj_set_style_text_color(*value_label, lv_color_hex(0xDDE6F3), 0);
+  lv_obj_set_style_text_color(*value_label, lv_color_hex(APP_UI_COLOR_TEXT_VALUE), 0);
   lv_obj_align(*value_label, LV_ALIGN_TOP_LEFT, APP_UI_CONTENT_VALUE_X, y);
 }
 
@@ -408,20 +421,20 @@ static void App_LvglUiCreatePresetBadge(lv_obj_t *parent)
 {
   g_preset_name_label = lv_label_create(parent);
   lv_label_set_text(g_preset_name_label, "Preset");
-  lv_obj_set_style_text_color(g_preset_name_label, lv_color_hex(0xBFC7D5), 0);
+  lv_obj_set_style_text_color(g_preset_name_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align(g_preset_name_label, LV_ALIGN_TOP_RIGHT, -180, 26);
 
   g_preset_value_label = lv_label_create(parent);
   lv_obj_set_width(g_preset_value_label, 150);
   lv_obj_set_style_text_align(g_preset_value_label, LV_TEXT_ALIGN_RIGHT, 0);
-  lv_obj_set_style_text_color(g_preset_value_label, lv_color_hex(0xDDE6F3), 0);
+  lv_obj_set_style_text_color(g_preset_value_label, lv_color_hex(APP_UI_COLOR_TEXT_VALUE), 0);
   lv_obj_align(g_preset_value_label, LV_ALIGN_TOP_RIGHT, -24, 26);
 }
 
 static void App_LvglUiCreateDebugBadge(lv_obj_t *parent)
 {
   g_debug_status_label = lv_label_create(parent);
-  lv_obj_set_style_text_color(g_debug_status_label, lv_color_hex(0xBFC7D5), 0);
+  lv_obj_set_style_text_color(g_debug_status_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align(g_debug_status_label, LV_ALIGN_TOP_RIGHT, -24, 58);
 
   g_debug_button = lv_button_create(parent);
@@ -436,11 +449,11 @@ static void App_LvglUiCreateDebugBadge(lv_obj_t *parent)
 static void App_LvglUiCreateSelfTestBadge(lv_obj_t *parent)
 {
   g_ad9959_status_label = lv_label_create(parent);
-  lv_obj_set_style_text_color(g_ad9959_status_label, lv_color_hex(0xDDE6F3), 0);
+  lv_obj_set_style_text_color(g_ad9959_status_label, lv_color_hex(APP_UI_COLOR_TEXT_VALUE), 0);
   lv_obj_align(g_ad9959_status_label, LV_ALIGN_TOP_RIGHT, -24, 124);
 
   g_f429_status_label = lv_label_create(parent);
-  lv_obj_set_style_text_color(g_f429_status_label, lv_color_hex(0xDDE6F3), 0);
+  lv_obj_set_style_text_color(g_f429_status_label, lv_color_hex(APP_UI_COLOR_TEXT_VALUE), 0);
   lv_obj_align(g_f429_status_label, LV_ALIGN_TOP_RIGHT, -24, 148);
 }
 
@@ -448,13 +461,13 @@ static void App_LvglUiCreateSweepTimeBadge(lv_obj_t *parent)
 {
   g_sweep_time_name_label = lv_label_create(parent);
   lv_label_set_text(g_sweep_time_name_label, "Sweep");
-  lv_obj_set_style_text_color(g_sweep_time_name_label, lv_color_hex(0xBFC7D5), 0);
+  lv_obj_set_style_text_color(g_sweep_time_name_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align(g_sweep_time_name_label, LV_ALIGN_TOP_RIGHT, -180, 136);
 
   g_sweep_time_value_label = lv_label_create(parent);
   lv_obj_set_width(g_sweep_time_value_label, 150);
   lv_obj_set_style_text_align(g_sweep_time_value_label, LV_TEXT_ALIGN_RIGHT, 0);
-  lv_obj_set_style_text_color(g_sweep_time_value_label, lv_color_hex(0xDDE6F3), 0);
+  lv_obj_set_style_text_color(g_sweep_time_value_label, lv_color_hex(APP_UI_COLOR_TEXT_VALUE), 0);
   lv_obj_align(g_sweep_time_value_label, LV_ALIGN_TOP_RIGHT, -24, 136);
 }
 
@@ -462,24 +475,24 @@ static void App_LvglUiCreateSweepRangeBadge(lv_obj_t *parent)
 {
   g_sweep_start_name_label = lv_label_create(parent);
   lv_label_set_text(g_sweep_start_name_label, "S-Start");
-  lv_obj_set_style_text_color(g_sweep_start_name_label, lv_color_hex(0xBFC7D5), 0);
+  lv_obj_set_style_text_color(g_sweep_start_name_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align(g_sweep_start_name_label, LV_ALIGN_TOP_RIGHT, -180, 162);
 
   g_sweep_start_value_label = lv_label_create(parent);
   lv_obj_set_width(g_sweep_start_value_label, 150);
   lv_obj_set_style_text_align(g_sweep_start_value_label, LV_TEXT_ALIGN_RIGHT, 0);
-  lv_obj_set_style_text_color(g_sweep_start_value_label, lv_color_hex(0xDDE6F3), 0);
+  lv_obj_set_style_text_color(g_sweep_start_value_label, lv_color_hex(APP_UI_COLOR_TEXT_VALUE), 0);
   lv_obj_align(g_sweep_start_value_label, LV_ALIGN_TOP_RIGHT, -24, 162);
 
   g_sweep_stop_name_label = lv_label_create(parent);
   lv_label_set_text(g_sweep_stop_name_label, "S-Stop");
-  lv_obj_set_style_text_color(g_sweep_stop_name_label, lv_color_hex(0xBFC7D5), 0);
+  lv_obj_set_style_text_color(g_sweep_stop_name_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align(g_sweep_stop_name_label, LV_ALIGN_TOP_RIGHT, -180, 188);
 
   g_sweep_stop_value_label = lv_label_create(parent);
   lv_obj_set_width(g_sweep_stop_value_label, 150);
   lv_obj_set_style_text_align(g_sweep_stop_value_label, LV_TEXT_ALIGN_RIGHT, 0);
-  lv_obj_set_style_text_color(g_sweep_stop_value_label, lv_color_hex(0xDDE6F3), 0);
+  lv_obj_set_style_text_color(g_sweep_stop_value_label, lv_color_hex(APP_UI_COLOR_TEXT_VALUE), 0);
   lv_obj_align(g_sweep_stop_value_label, LV_ALIGN_TOP_RIGHT, -24, 188);
 }
 
@@ -489,25 +502,25 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
   {
     lv_obj_t *field_label = lv_label_create(g_field_button);
     lv_obj_set_size(g_field_button, 88, 44);
-    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 24, -24);
+    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 214, -24);
     lv_obj_add_event_cb(g_field_button, App_LvglUiOnFieldClicked, LV_EVENT_CLICKED, NULL);
-    lv_label_set_text(field_label, "Field");
+    lv_label_set_text(field_label, "FREQ");
     lv_obj_center(field_label);
   }
   g_digit_button = lv_button_create(parent);
   {
     lv_obj_t *digit_label = lv_label_create(g_digit_button);
     lv_obj_set_size(g_digit_button, 88, 44);
-    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 124, -24);
+    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 314, -24);
     lv_obj_add_event_cb(g_digit_button, App_LvglUiOnDigitClicked, LV_EVENT_CLICKED, NULL);
-    lv_label_set_text(digit_label, "Digit");
+    lv_label_set_text(digit_label, "AMP");
     lv_obj_center(digit_label);
   }
   g_dec_button = lv_button_create(parent);
   {
     lv_obj_t *dec_label = lv_label_create(g_dec_button);
     lv_obj_set_size(g_dec_button, 76, 44);
-    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 224, -24);
+    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 414, -24);
     lv_obj_add_event_cb(g_dec_button, App_LvglUiOnDecClicked, LV_EVENT_CLICKED, NULL);
     lv_label_set_text(dec_label, "-");
     lv_obj_center(dec_label);
@@ -516,7 +529,7 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
   {
     lv_obj_t *inc_label = lv_label_create(g_inc_button);
     lv_obj_set_size(g_inc_button, 76, 44);
-    lv_obj_align(g_inc_button, LV_ALIGN_BOTTOM_LEFT, 312, -24);
+    lv_obj_align(g_inc_button, LV_ALIGN_BOTTOM_LEFT, 502, -24);
     lv_obj_add_event_cb(g_inc_button, App_LvglUiOnIncClicked, LV_EVENT_CLICKED, NULL);
     lv_label_set_text(inc_label, "+");
     lv_obj_center(inc_label);
@@ -529,12 +542,12 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
 
   g_edit_label = lv_label_create(parent);
   lv_obj_set_width(g_edit_label, 360);
-  lv_obj_set_style_text_color(g_edit_label, lv_color_hex(0xBFC7D5), 0);
-  lv_obj_align(g_edit_label, LV_ALIGN_BOTTOM_LEFT, 164, -86);
+  lv_obj_set_style_text_color(g_edit_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
+  lv_obj_align(g_edit_label, LV_ALIGN_BOTTOM_LEFT, 244, -86);
 
   g_state_label = lv_label_create(parent);
   lv_obj_set_width(g_state_label, 220);
-  lv_obj_set_style_text_color(g_state_label, lv_color_hex(0xBFC7D5), 0);
+  lv_obj_set_style_text_color(g_state_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
   lv_obj_align(g_state_label, LV_ALIGN_BOTTOM_RIGHT, -44, -86);
 
   g_sweep_button = lv_button_create(parent);
@@ -571,7 +584,7 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
   g_preset_save_button = lv_button_create(parent);
   preset_save_label = lv_label_create(g_preset_save_button);
   lv_obj_set_size(g_preset_save_button, 82, 44);
-  lv_obj_align(g_preset_save_button, LV_ALIGN_BOTTOM_LEFT, 400, -24);
+  lv_obj_align(g_preset_save_button, LV_ALIGN_BOTTOM_LEFT, 590, -24);
   lv_obj_add_event_cb(g_preset_save_button, App_LvglUiOnPresetSaveClicked, LV_EVENT_CLICKED, NULL);
   lv_label_set_text(preset_save_label, "Save");
   lv_obj_center(preset_save_label);
@@ -579,7 +592,7 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
   g_preset_recall_button = lv_button_create(parent);
   preset_recall_label = lv_label_create(g_preset_recall_button);
   lv_obj_set_size(g_preset_recall_button, 82, 44);
-  lv_obj_align(g_preset_recall_button, LV_ALIGN_BOTTOM_LEFT, 494, -24);
+  lv_obj_align(g_preset_recall_button, LV_ALIGN_BOTTOM_LEFT, 684, -24);
   lv_obj_add_event_cb(g_preset_recall_button, App_LvglUiOnPresetRecallClicked, LV_EVENT_CLICKED, NULL);
   lv_label_set_text(preset_recall_label, "Recall");
   lv_obj_center(preset_recall_label);
@@ -596,7 +609,7 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
 
   g_run_button = lv_button_create(parent);
   lv_obj_set_size(g_run_button, 86, 44);
-  lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 690, -24);
+  lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 688, -24);
   lv_obj_add_event_cb(g_run_button, App_LvglUiOnRunClicked, LV_EVENT_CLICKED, NULL);
   g_run_button_label = lv_label_create(g_run_button);
   lv_obj_center(g_run_button_label);
@@ -634,11 +647,25 @@ static void App_LvglUiEnsureEditableField(void)
   }
 }
 
+static void App_LvglUiSelectField(AppUiEditField field)
+{
+  g_selected_field = field;
+
+  if (g_digit_index >= App_LvglUiGetFieldStepCount(g_selected_field))
+  {
+    g_digit_index = 0U;
+  }
+
+  App_LvglUiEnsureEditableField();
+  App_LvglUiRefreshValues();
+  App_LvglUiRefreshEditState();
+}
+
 static void App_LvglUiRefreshValues(void)
 {
-  lv_color_t normal_name = lv_color_hex(0xFFFFFF);
-  lv_color_t normal_value = lv_color_hex(0xDDE6F3);
-  lv_color_t selected = lv_color_hex(0x68D391);
+  lv_color_t normal_name = lv_color_hex(APP_UI_COLOR_TEXT_MAIN);
+  lv_color_t normal_value = lv_color_hex(APP_UI_COLOR_TEXT_VALUE);
+  lv_color_t selected = lv_color_hex(APP_UI_COLOR_ACCENT);
   AppDacWavegenMode mode = g_ui_config.mode;
 
   App_LvglUiRefreshModeVisibility();
@@ -731,10 +758,10 @@ static void App_LvglUiRefreshValues(void)
   lv_obj_set_style_text_color(g_sweep_stop_value_label, normal_value, 0);
   lv_obj_set_style_text_color(g_vpp_name_label, normal_name, 0);
   lv_obj_set_style_text_color(g_vpp_value_label, normal_value, 0);
-  lv_obj_set_style_text_color(g_rate_name_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(0x6B7280) : normal_name, 0);
-  lv_obj_set_style_text_color(g_rate_value_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(0x6B7280) : normal_value, 0);
-  lv_obj_set_style_text_color(g_param_name_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(0x6B7280) : normal_name, 0);
-  lv_obj_set_style_text_color(g_param_value_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(0x6B7280) : normal_value, 0);
+  lv_obj_set_style_text_color(g_rate_name_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(APP_UI_COLOR_TEXT_MUTED) : normal_name, 0);
+  lv_obj_set_style_text_color(g_rate_value_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(APP_UI_COLOR_TEXT_MUTED) : normal_value, 0);
+  lv_obj_set_style_text_color(g_param_name_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(APP_UI_COLOR_TEXT_MUTED) : normal_name, 0);
+  lv_obj_set_style_text_color(g_param_value_label, (App_LvglUiIsCwMode(mode) != 0U) ? lv_color_hex(APP_UI_COLOR_TEXT_MUTED) : normal_value, 0);
 
   switch (g_selected_field)
   {
@@ -973,13 +1000,13 @@ static void App_LvglUiRefreshSectionButtons(const AppTxControlSnapshot *snapshot
 
     if (buttons[i] == active_button)
     {
-      lv_obj_set_style_bg_color(buttons[i], lv_color_hex(0x2F855A), 0);
-      lv_obj_set_style_border_color(buttons[i], lv_color_hex(0x68D391), 0);
+      lv_obj_set_style_bg_color(buttons[i], lv_color_hex(APP_UI_COLOR_BUTTON_ON), 0);
+      lv_obj_set_style_border_color(buttons[i], lv_color_hex(APP_UI_COLOR_ACCENT), 0);
       lv_obj_set_style_border_width(buttons[i], 2, 0);
     }
     else
     {
-      lv_obj_set_style_bg_color(buttons[i], lv_color_hex(0x374151), 0);
+      lv_obj_set_style_bg_color(buttons[i], lv_color_hex(APP_UI_COLOR_BUTTON_IDLE), 0);
       lv_obj_set_style_border_width(buttons[i], 0, 0);
     }
   }
@@ -1345,32 +1372,6 @@ static void App_LvglUiSetFieldValue(AppUiEditField field, uint32_t value)
   }
 }
 
-static void App_LvglUiCycleField(void)
-{
-  uint32_t tries = 0U;
-
-  do
-  {
-    g_selected_field = (AppUiEditField)((g_selected_field + 1U) % APP_UI_FIELD_COUNT);
-    tries++;
-  } while ((tries < APP_UI_FIELD_COUNT) && (App_LvglUiIsFieldEditable(g_selected_field) == 0U));
-
-  g_digit_index = 0U;
-}
-
-static void App_LvglUiCycleDigit(void)
-{
-  uint32_t count = App_LvglUiGetFieldStepCount(g_selected_field);
-
-  if (count == 0U)
-  {
-    g_digit_index = 0U;
-    return;
-  }
-
-  g_digit_index = (uint8_t)((g_digit_index + 1U) % count);
-}
-
 static void App_LvglUiAdjustSelectedField(int32_t direction)
 {
   uint32_t min_value;
@@ -1471,10 +1472,7 @@ static void App_LvglUiOnFieldClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
-  App_LvglUiCycleField();
-  App_LvglUiEnsureEditableField();
-  App_LvglUiRefreshValues();
-  App_LvglUiRefreshEditState();
+  App_LvglUiSelectField(APP_UI_FIELD_LO_FREQ);
 }
 
 static void App_LvglUiOnDigitClicked(lv_event_t *e)
@@ -1485,8 +1483,7 @@ static void App_LvglUiOnDigitClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
-  App_LvglUiCycleDigit();
-  App_LvglUiRefreshEditState();
+  App_LvglUiSelectField(APP_UI_FIELD_VPP);
 }
 
 static void App_LvglUiOnDecClicked(lv_event_t *e)
