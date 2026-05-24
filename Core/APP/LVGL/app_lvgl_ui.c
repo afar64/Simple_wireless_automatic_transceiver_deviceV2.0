@@ -48,7 +48,10 @@ typedef enum
   APP_UI_KEYPAD_AMP,
   APP_UI_KEYPAD_SWEEP_START,
   APP_UI_KEYPAD_SWEEP_STOP,
-  APP_UI_KEYPAD_SWEEP_TIME
+  APP_UI_KEYPAD_SWEEP_TIME,
+  APP_UI_KEYPAD_MOD_FC,
+  APP_UI_KEYPAD_MOD_FREQ,
+  APP_UI_KEYPAD_MOD_DEPTH
 } AppUiKeypadTarget;
 
 static lv_obj_t *g_mode_dropdown = NULL;
@@ -168,7 +171,10 @@ static void App_LvglUiSetActiveSection(AppUiSection section);
 static const char *App_LvglUiSectionTitle(void);
 static void App_LvglUiApplySingleLayout(void);
 static void App_LvglUiApplySweepLayout(void);
+static void App_LvglUiApplyModLayout(void);
 static void App_LvglUiRefreshModeVisibility(void);
+static const char *App_LvglUiModRateButtonText(void);
+static const char *App_LvglUiModParamButtonText(void);
 static uint8_t App_LvglUiIsFieldEditable(AppUiEditField field);
 static const char *App_LvglUiFieldName(AppUiEditField field);
 static uint32_t App_LvglUiGetFieldStepCount(AppUiEditField field);
@@ -306,7 +312,8 @@ void App_LvglUiPoll(void)
   {
     if (g_mode_dropdown != NULL)
     {
-      lv_dropdown_set_selected(g_mode_dropdown, (uint16_t)g_ui_config.mode);
+      lv_dropdown_set_selected(g_mode_dropdown,
+                               (uint16_t)((g_ui_config.mode <= APP_DAC_WAVE_MODE_2FSK) ? g_ui_config.mode : APP_DAC_WAVE_MODE_AM));
     }
     App_LvglUiRefreshValues();
     App_LvglUiEnsureEditableField();
@@ -437,8 +444,9 @@ static void App_LvglUiCreateModeRow(lv_obj_t *parent, AppDacWavegenMode mode, in
 
   g_mode_dropdown = lv_dropdown_create(parent);
   lv_obj_set_width(g_mode_dropdown, 170);
-  lv_dropdown_set_options(g_mode_dropdown, "AM\nFM\n2ASK\n2PSK\n2FSK\nCW");
-  lv_dropdown_set_selected(g_mode_dropdown, (uint16_t)mode);
+  lv_dropdown_set_options(g_mode_dropdown, "AM\nFM\n2ASK\n2PSK\n2FSK");
+  lv_dropdown_set_selected(g_mode_dropdown,
+                           (uint16_t)((mode <= APP_DAC_WAVE_MODE_2FSK) ? mode : APP_DAC_WAVE_MODE_AM));
   lv_obj_align(g_mode_dropdown, LV_ALIGN_TOP_LEFT, APP_UI_CONTENT_VALUE_X, y);
   lv_obj_add_event_cb(g_mode_dropdown, App_LvglUiOnModeChanged, LV_EVENT_VALUE_CHANGED, NULL);
 }
@@ -835,7 +843,8 @@ static void App_LvglUiRefreshValues(void)
   }
   if (g_mode_dropdown != NULL)
   {
-    lv_dropdown_set_selected(g_mode_dropdown, (uint16_t)mode);
+    lv_dropdown_set_selected(g_mode_dropdown,
+                             (uint16_t)((mode <= APP_DAC_WAVE_MODE_2FSK) ? mode : APP_DAC_WAVE_MODE_AM));
   }
 
   lv_label_set_text_fmt(g_lo_value_label, "%lu.%06lu MHz",
@@ -856,6 +865,7 @@ static void App_LvglUiRefreshValues(void)
   lv_label_set_text(g_sweep_start_name_label, "Start freq");
   lv_label_set_text(g_sweep_stop_name_label, "Stop freq");
   lv_label_set_text(g_sweep_time_name_label, "Time");
+  lv_label_set_text(g_lo_name_label, "FC");
   if (App_LvglUiIsCwMode(mode) != 0U)
   {
     lv_label_set_text(g_vpp_name_label, "Amp");
@@ -885,7 +895,7 @@ static void App_LvglUiRefreshValues(void)
     switch (mode)
     {
       case APP_DAC_WAVE_MODE_AM:
-        lv_label_set_text(g_param_name_label, "Depth");
+        lv_label_set_text(g_param_name_label, "Mod depth");
         lv_label_set_text_fmt(g_param_value_label, "%u %%", (unsigned)g_ui_config.am_depth_percent);
         break;
       case APP_DAC_WAVE_MODE_FM:
@@ -1104,6 +1114,12 @@ static void App_LvglUiRefreshState(void)
     lv_label_set_text(g_rf_name_label, "Sweep out");
     lv_label_set_text(g_rf_value_label, (snapshot.basic.sweep_on != 0U) ? "START" : "OFF");
   }
+  else if ((g_active_section == APP_UI_SECTION_MOD) && (g_run_button_label != NULL))
+  {
+    lv_label_set_text(g_run_button_label, "MOD OUT");
+    lv_label_set_text(g_rf_name_label, "Mod out");
+    lv_label_set_text(g_rf_value_label, (snapshot.basic.tx_on != 0U) ? "START" : "OFF");
+  }
 
   if (g_sweep_button_label != NULL)
   {
@@ -1227,10 +1243,12 @@ static void App_LvglUiRefreshSectionVisibility(void)
     g_rf_name_label, g_rf_value_label, g_field_button, g_digit_button, g_dec_button, g_run_button
   };
   lv_obj_t *show_mod_objs[] = {
-    g_lo_name_label, g_lo_value_label, g_mode_name_label, g_mode_dropdown,
-    g_vpp_name_label, g_vpp_value_label, g_rate_name_label, g_rate_value_label,
-    g_param_name_label, g_param_value_label, g_field_button, g_digit_button,
-    g_dec_button, g_inc_button, g_apply_button, g_run_button, g_edit_label, g_state_label
+    g_mode_name_label, g_mode_dropdown,
+    g_lo_name_label, g_lo_value_label,
+    g_rate_name_label, g_rate_value_label,
+    g_param_name_label, g_param_value_label,
+    g_rf_name_label, g_rf_value_label,
+    g_field_button, g_digit_button, g_dec_button, g_run_button
   };
   lv_obj_t *show_system_objs[] = {
     g_debug_status_label, g_debug_button, g_ad9959_status_label, g_f429_status_label, g_state_label
@@ -1276,6 +1294,7 @@ static void App_LvglUiRefreshSectionVisibility(void)
 
   if (show_mod != 0U)
   {
+    App_LvglUiApplyModLayout();
     for (i = 0U; i < (uint32_t)(sizeof(show_mod_objs) / sizeof(show_mod_objs[0])); i++)
     {
       if (show_mod_objs[i] != NULL) { lv_obj_clear_flag(show_mod_objs[i], LV_OBJ_FLAG_HIDDEN); }
@@ -1407,6 +1426,113 @@ static void App_LvglUiApplySweepLayout(void)
   {
     lv_obj_set_size(g_run_button, 104, 44);
     lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 548, -30);
+  }
+}
+
+static void App_LvglUiApplyModLayout(void)
+{
+  lv_obj_t *label;
+
+  label = (g_field_button != NULL) ? lv_obj_get_child(g_field_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, "FC"); }
+  label = (g_digit_button != NULL) ? lv_obj_get_child(g_digit_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, App_LvglUiModRateButtonText()); }
+  label = (g_dec_button != NULL) ? lv_obj_get_child(g_dec_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, App_LvglUiModParamButtonText()); }
+
+  if (g_section_title_label != NULL)
+  {
+    lv_obj_align(g_section_title_label, LV_ALIGN_TOP_MID, 0, 88);
+  }
+  if (g_mode_name_label != NULL)
+  {
+    lv_label_set_text(g_mode_name_label, "Mode");
+    lv_obj_align(g_mode_name_label, LV_ALIGN_TOP_LEFT, 248, 112);
+  }
+  if (g_mode_dropdown != NULL)
+  {
+    lv_obj_set_width(g_mode_dropdown, 170);
+    lv_obj_align(g_mode_dropdown, LV_ALIGN_TOP_LEFT, 390, 102);
+  }
+  if (g_lo_name_label != NULL)
+  {
+    lv_obj_align(g_lo_name_label, LV_ALIGN_TOP_LEFT, 248, 154);
+  }
+  if (g_lo_value_label != NULL)
+  {
+    lv_obj_align(g_lo_value_label, LV_ALIGN_TOP_LEFT, 390, 154);
+  }
+  if (g_rate_name_label != NULL)
+  {
+    lv_obj_align(g_rate_name_label, LV_ALIGN_TOP_LEFT, 248, 198);
+  }
+  if (g_rate_value_label != NULL)
+  {
+    lv_obj_align(g_rate_value_label, LV_ALIGN_TOP_LEFT, 390, 198);
+  }
+  if (g_param_name_label != NULL)
+  {
+    lv_obj_align(g_param_name_label, LV_ALIGN_TOP_LEFT, 248, 242);
+  }
+  if (g_param_value_label != NULL)
+  {
+    lv_obj_align(g_param_value_label, LV_ALIGN_TOP_LEFT, 390, 242);
+  }
+  if (g_rf_name_label != NULL)
+  {
+    lv_obj_align(g_rf_name_label, LV_ALIGN_TOP_LEFT, 248, 286);
+  }
+  if (g_rf_value_label != NULL)
+  {
+    lv_obj_align(g_rf_value_label, LV_ALIGN_TOP_LEFT, 390, 286);
+  }
+  if (g_field_button != NULL)
+  {
+    lv_obj_set_size(g_field_button, 96, 44);
+    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 220, -30);
+  }
+  if (g_digit_button != NULL)
+  {
+    lv_obj_set_size(g_digit_button, 96, 44);
+    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 328, -30);
+  }
+  if (g_dec_button != NULL)
+  {
+    lv_obj_set_size(g_dec_button, 96, 44);
+    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 436, -30);
+  }
+  if (g_run_button != NULL)
+  {
+    lv_obj_set_size(g_run_button, 104, 44);
+    lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 548, -30);
+  }
+}
+
+static const char *App_LvglUiModRateButtonText(void)
+{
+  if ((g_ui_config.mode == APP_DAC_WAVE_MODE_AM) || (g_ui_config.mode == APP_DAC_WAVE_MODE_FM))
+  {
+    return "MFREQ";
+  }
+
+  return "BRATE";
+}
+
+static const char *App_LvglUiModParamButtonText(void)
+{
+  switch (g_ui_config.mode)
+  {
+    case APP_DAC_WAVE_MODE_AM:
+      return "DEPTH";
+    case APP_DAC_WAVE_MODE_FM:
+      return "DEV";
+    case APP_DAC_WAVE_MODE_2ASK:
+      return "N/A";
+    case APP_DAC_WAVE_MODE_2PSK:
+      return "N/A";
+    case APP_DAC_WAVE_MODE_2FSK:
+    default:
+      return "SHIFT";
   }
 }
 
@@ -1789,7 +1915,7 @@ static void App_LvglUiRefreshKeypad(void)
 
   current_value = 0U;
 
-  if (g_keypad_target == APP_UI_KEYPAD_LO_FREQ)
+  if ((g_keypad_target == APP_UI_KEYPAD_LO_FREQ) || (g_keypad_target == APP_UI_KEYPAD_MOD_FC))
   {
     current_value = g_lo_freq_hz;
     lv_label_set_text(g_keypad_title_label, "Set FREQ");
@@ -1846,16 +1972,61 @@ static void App_LvglUiRefreshKeypad(void)
   }
   else
   {
-    current_value = g_sweep_period_ms;
-    lv_label_set_text(g_keypad_title_label, "Set TIME");
-    lv_label_set_text(g_keypad_unit_label, "s");
-    lv_label_set_text_fmt(g_keypad_current_label,
-                          "Current: %lu.%01lu s",
-                          (unsigned long)(current_value / 1000UL),
-                          (unsigned long)((current_value % 1000UL) / 100UL));
-    if (g_keypad_dot_button != NULL)
+    if (g_keypad_target == APP_UI_KEYPAD_SWEEP_TIME)
     {
-      lv_obj_clear_flag(g_keypad_dot_button, LV_OBJ_FLAG_HIDDEN);
+      current_value = g_sweep_period_ms;
+      lv_label_set_text(g_keypad_title_label, "Set TIME");
+      lv_label_set_text(g_keypad_unit_label, "s");
+      lv_label_set_text_fmt(g_keypad_current_label,
+                            "Current: %lu.%01lu s",
+                            (unsigned long)(current_value / 1000UL),
+                            (unsigned long)((current_value % 1000UL) / 100UL));
+      if (g_keypad_dot_button != NULL)
+      {
+        lv_obj_clear_flag(g_keypad_dot_button, LV_OBJ_FLAG_HIDDEN);
+      }
+    }
+    else if (g_keypad_target == APP_UI_KEYPAD_MOD_FREQ)
+    {
+      if ((g_ui_config.mode == APP_DAC_WAVE_MODE_AM) || (g_ui_config.mode == APP_DAC_WAVE_MODE_FM))
+      {
+        current_value = g_ui_config.mod_freq_hz;
+        lv_label_set_text(g_keypad_title_label, "Set MFREQ");
+        lv_label_set_text(g_keypad_unit_label, "Hz");
+        lv_label_set_text_fmt(g_keypad_current_label, "Current: %lu Hz", (unsigned long)current_value);
+      }
+      else
+      {
+        current_value = g_ui_config.symbol_rate_bps;
+        lv_label_set_text(g_keypad_title_label, "Set BRATE");
+        lv_label_set_text(g_keypad_unit_label, "bps");
+        lv_label_set_text_fmt(g_keypad_current_label, "Current: %lu bps", (unsigned long)current_value);
+      }
+      if (g_keypad_dot_button != NULL)
+      {
+        lv_obj_add_flag(g_keypad_dot_button, LV_OBJ_FLAG_HIDDEN);
+      }
+    }
+    else
+    {
+      if (g_ui_config.mode == APP_DAC_WAVE_MODE_AM)
+      {
+        current_value = g_ui_config.am_depth_percent;
+        lv_label_set_text(g_keypad_title_label, "Set DEPTH");
+        lv_label_set_text(g_keypad_unit_label, "%");
+        lv_label_set_text_fmt(g_keypad_current_label, "Current: %lu %%", (unsigned long)current_value);
+      }
+      else
+      {
+        current_value = g_ui_config.fsk_shift_hz;
+        lv_label_set_text(g_keypad_title_label, "Set SHIFT");
+        lv_label_set_text(g_keypad_unit_label, "Hz");
+        lv_label_set_text_fmt(g_keypad_current_label, "Current: %lu Hz", (unsigned long)current_value);
+      }
+      if (g_keypad_dot_button != NULL)
+      {
+        lv_obj_add_flag(g_keypad_dot_button, LV_OBJ_FLAG_HIDDEN);
+      }
     }
   }
 
@@ -1883,7 +2054,8 @@ static uint8_t App_LvglUiTryParseKeypadValue(AppUiKeypadTarget target, const cha
     return 0U;
   }
 
-  if ((target == APP_UI_KEYPAD_LO_FREQ) || (target == APP_UI_KEYPAD_SWEEP_START) || (target == APP_UI_KEYPAD_SWEEP_STOP))
+  if ((target == APP_UI_KEYPAD_LO_FREQ) || (target == APP_UI_KEYPAD_SWEEP_START) ||
+      (target == APP_UI_KEYPAD_SWEEP_STOP) || (target == APP_UI_KEYPAD_MOD_FC))
   {
     min_value = APP_TX_CONTROL_FREQ_MIN_HZ;
     max_value = APP_TX_CONTROL_FREQ_MAX_HZ;
@@ -1992,8 +2164,21 @@ static uint8_t App_LvglUiTryParseKeypadValue(AppUiKeypadTarget target, const cha
   }
   else
   {
-    min_value = APP_UI_AMP_RMS_MIN_MV;
-    max_value = APP_UI_AMP_RMS_MAX_MV;
+    if (target == APP_UI_KEYPAD_AMP)
+    {
+      min_value = APP_UI_AMP_RMS_MIN_MV;
+      max_value = APP_UI_AMP_RMS_MAX_MV;
+    }
+    else if (target == APP_UI_KEYPAD_MOD_FREQ)
+    {
+      min_value = APP_DAC_WAVE_MOD_FREQ_MIN_HZ;
+      max_value = APP_DAC_WAVE_MOD_FREQ_MAX_HZ;
+    }
+    else
+    {
+      min_value = APP_DAC_WAVE_AM_DEPTH_MIN_PERCENT;
+      max_value = APP_DAC_WAVE_AM_DEPTH_MAX_PERCENT;
+    }
     for (i = 0U; text[i] != '\0'; ++i)
     {
       char c = text[i];
@@ -2057,6 +2242,11 @@ static void App_LvglUiOnFieldClicked(lv_event_t *e)
     App_LvglUiOpenKeypad(APP_UI_KEYPAD_SWEEP_START);
     return;
   }
+  if (g_active_section == APP_UI_SECTION_MOD)
+  {
+    App_LvglUiOpenKeypad(APP_UI_KEYPAD_MOD_FC);
+    return;
+  }
   App_LvglUiOpenKeypad(APP_UI_KEYPAD_LO_FREQ);
 }
 
@@ -2073,6 +2263,11 @@ static void App_LvglUiOnDigitClicked(lv_event_t *e)
     App_LvglUiOpenKeypad(APP_UI_KEYPAD_SWEEP_STOP);
     return;
   }
+  if (g_active_section == APP_UI_SECTION_MOD)
+  {
+    App_LvglUiOpenKeypad(APP_UI_KEYPAD_MOD_FREQ);
+    return;
+  }
   App_LvglUiOpenKeypad(APP_UI_KEYPAD_AMP);
 }
 
@@ -2087,6 +2282,16 @@ static void App_LvglUiOnDecClicked(lv_event_t *e)
   if (g_active_section == APP_UI_SECTION_SWEEP)
   {
     App_LvglUiOpenKeypad(APP_UI_KEYPAD_SWEEP_TIME);
+    return;
+  }
+  if (g_active_section == APP_UI_SECTION_MOD)
+  {
+    if (App_LvglUiIsFieldEditable(APP_UI_FIELD_PARAM) == 0U)
+    {
+      App_LvglUiRefreshState();
+      return;
+    }
+    App_LvglUiOpenKeypad(APP_UI_KEYPAD_MOD_DEPTH);
     return;
   }
   App_LvglUiAdjustSelectedField(-1);
@@ -2263,6 +2468,25 @@ static void App_LvglUiOnRunClicked(lv_event_t *e)
     App_LvglUiOnSweepClicked(e);
     return;
   }
+  if (g_active_section == APP_UI_SECTION_MOD)
+  {
+    if (snapshot.basic.tx_on != 0U)
+    {
+      (void)App_TxControl_Stop();
+    }
+    else
+    {
+      (void)App_TxControl_Start();
+      (void)App_LvglUiSendCurrentModeToWinner();
+    }
+
+    App_TxControl_GetSnapshot(&snapshot);
+    g_lo_freq_hz = snapshot.basic.freq_hz;
+    g_lo_freq_dirty = 0U;
+    g_mode_dirty = 0U;
+    App_LvglUiRefreshState();
+    return;
+  }
 
   if (snapshot.basic.tx_on != 0U)
   {
@@ -2348,14 +2572,11 @@ static void App_LvglUiOnModClicked(lv_event_t *e)
     return;
   }
 
-  if (App_LvglUiIsCwMode(g_ui_config.mode) != 0U)
-  {
-    App_LvglUiResetModeConfig(APP_DAC_WAVE_MODE_AM);
-    (void)App_TxControl_SetMode(APP_DAC_WAVE_MODE_AM);
-    g_mode_dirty = 1U;
-    g_selected_field = APP_UI_DEFAULT_FIELD;
-    g_digit_index = APP_UI_DEFAULT_DIGIT_INDEX;
-  }
+  App_LvglUiResetModeConfig(APP_DAC_WAVE_MODE_AM);
+  (void)App_TxControl_SetMode(APP_DAC_WAVE_MODE_AM);
+  g_mode_dirty = 1U;
+  g_selected_field = APP_UI_DEFAULT_FIELD;
+  g_digit_index = APP_UI_DEFAULT_DIGIT_INDEX;
 
   (void)App_TxControl_SetSweepEnabled(0U);
   (void)App_TxControl_Stop();
@@ -2448,7 +2669,7 @@ static void App_LvglUiOnKeypadOkClicked(lv_event_t *e)
     return;
   }
 
-  if (g_keypad_target == APP_UI_KEYPAD_LO_FREQ)
+  if ((g_keypad_target == APP_UI_KEYPAD_LO_FREQ) || (g_keypad_target == APP_UI_KEYPAD_MOD_FC))
   {
     App_LvglUiSetFieldValue(APP_UI_FIELD_LO_FREQ, value);
     App_LvglUiCloseKeypad();
@@ -2458,6 +2679,34 @@ static void App_LvglUiOnKeypadOkClicked(lv_event_t *e)
   if (g_keypad_target == APP_UI_KEYPAD_AMP)
   {
     App_LvglUiSetFieldValue(APP_UI_FIELD_VPP, value);
+    App_LvglUiCloseKeypad();
+    App_LvglUiApplyConfig();
+    return;
+  }
+  if (g_keypad_target == APP_UI_KEYPAD_MOD_FREQ)
+  {
+    if ((g_ui_config.mode == APP_DAC_WAVE_MODE_AM) || (g_ui_config.mode == APP_DAC_WAVE_MODE_FM))
+    {
+      g_ui_config.mod_freq_hz = value;
+    }
+    else
+    {
+      g_ui_config.symbol_rate_bps = value;
+    }
+    App_LvglUiCloseKeypad();
+    App_LvglUiApplyConfig();
+    return;
+  }
+  if (g_keypad_target == APP_UI_KEYPAD_MOD_DEPTH)
+  {
+    if (g_ui_config.mode == APP_DAC_WAVE_MODE_AM)
+    {
+      g_ui_config.am_depth_percent = (uint16_t)value;
+    }
+    else if (g_ui_config.mode == APP_DAC_WAVE_MODE_2FSK)
+    {
+      g_ui_config.fsk_shift_hz = value;
+    }
     App_LvglUiCloseKeypad();
     App_LvglUiApplyConfig();
     return;
