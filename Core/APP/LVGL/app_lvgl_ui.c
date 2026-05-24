@@ -16,6 +16,7 @@
 #define APP_UI_AMP_RMS_MAX_MV 100U
 #define APP_UI_AMP_RMS_STEP_MV 10U
 #define APP_UI_AMP_INTERNAL_SCALE 10U
+#define APP_UI_STATE_REFRESH_PERIOD_MS 200U
 static lv_obj_t *g_mode_dropdown = NULL;
 static lv_obj_t *g_lo_name_label = NULL;
 static lv_obj_t *g_lo_value_label = NULL;
@@ -59,6 +60,7 @@ static AppUiEditField g_selected_field = APP_UI_DEFAULT_FIELD;
 static uint8_t g_digit_index = APP_UI_DEFAULT_DIGIT_INDEX;
 static uint8_t g_lo_freq_dirty = 0U;
 static uint8_t g_mode_dirty = 0U;
+static uint32_t g_state_refresh_last_tick_ms = 0U;
 
 static const uint32_t s_lo_steps_hz[] = {APP_TX_CONTROL_FREQ_STEP_HZ};
 static const uint32_t s_amp_steps_mv[] = {APP_UI_AMP_RMS_STEP_MV};
@@ -166,6 +168,7 @@ void App_LvglUiInit(void)
 void App_LvglUiPoll(void)
 {
   AppTxControlSnapshot snapshot;
+  uint32_t now_ms = lv_tick_get();
   uint8_t ui_changed = 0U;
 
   App_TxControl_GetSnapshot(&snapshot);
@@ -212,11 +215,17 @@ void App_LvglUiPoll(void)
     App_LvglUiEnsureEditableField();
     App_LvglUiRefreshModeVisibility();
     App_LvglUiRefreshState();
+    g_state_refresh_last_tick_ms = now_ms;
     App_LvglUiRefreshEditState();
   }
   else
   {
-    App_LvglUiRefreshState();
+    if ((g_state_refresh_last_tick_ms == 0U) ||
+        ((now_ms - g_state_refresh_last_tick_ms) >= APP_UI_STATE_REFRESH_PERIOD_MS))
+    {
+      g_state_refresh_last_tick_ms = now_ms;
+      App_LvglUiRefreshState();
+    }
   }
 }
 

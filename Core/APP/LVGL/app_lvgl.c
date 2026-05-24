@@ -9,6 +9,12 @@
 #include "cmsis_os2.h"
 #include "main.h"
 
+#define APP_LVGL_TX_SERVICE_PERIOD_MS 5U
+#define APP_LVGL_UI_POLL_PERIOD_MS    50U
+
+static uint32_t g_tx_service_last_tick_ms = 0U;
+static uint32_t g_ui_poll_last_tick_ms = 0U;
+
 /*
  * 当前 ST 提供的 CMSIS-RTOS2 头文件声明了 osThreadDetach()，
  * 但这套 FreeRTOS 封装实现里并没有真正提供该符号。
@@ -46,12 +52,26 @@ void App_LvglInit(void)
 
 void App_LvglRun(void)
 {
+  uint32_t now_ms = HAL_GetTick();
+
   /*
    * LVGL 在 RTOS 下的主循环非常简单：
    * 周期性调用 lv_timer_handler() 即可。
    * 具体 delay 节奏留给 DisplayTask 控制，避免把任务调度策略写死在 LVGL 包装层。
    */
-  App_TxControl_Service(HAL_GetTick());
-  App_LvglUiPoll();
+  if ((g_tx_service_last_tick_ms == 0U) ||
+      ((now_ms - g_tx_service_last_tick_ms) >= APP_LVGL_TX_SERVICE_PERIOD_MS))
+  {
+    g_tx_service_last_tick_ms = now_ms;
+    App_TxControl_Service(now_ms);
+  }
+
+  if ((g_ui_poll_last_tick_ms == 0U) ||
+      ((now_ms - g_ui_poll_last_tick_ms) >= APP_LVGL_UI_POLL_PERIOD_MS))
+  {
+    g_ui_poll_last_tick_ms = now_ms;
+    App_LvglUiPoll();
+  }
+
   (void)lv_timer_handler();
 }
