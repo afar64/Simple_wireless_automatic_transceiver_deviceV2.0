@@ -314,6 +314,7 @@ void App_LvglUiPoll(void)
       App_LvglUiRefreshState();
     }
   }
+
 }
 
 static uint32_t App_LvglUiInternalToAmpRmsMv(uint16_t internal_mv)
