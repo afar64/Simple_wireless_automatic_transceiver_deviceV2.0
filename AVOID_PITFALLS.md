@@ -22,3 +22,5 @@ Update it after each completed task.
 - For the H743 signal-source UI, treat `Single / Sweep / Mod / System` as explicit sections, not just temporary highlights derived from runtime state. Otherwise the UI can jump between sections unexpectedly while the user is interacting.
 - `System` should be a view switch, not the same action as toggling debug mode. Keep debug enable/disable as a separate control inside the system section.
 - To keep the UI fast, hide whole groups of unrelated controls per section instead of leaving every label and button visible and updating all of them every cycle.
+- When matching a hardware photo/reference layout, prioritize geometry first: section positions, spacing, visible controls, and labels. Color and font tuning can come after the interaction path is stable on the board.
+- Do not assume larger LVGL Montserrat fonts are enabled in `lv_conf.h`. This project currently does not expose `lv_font_montserrat_20/24`, so layout changes should avoid depending on unavailable font assets unless you explicitly enable them first.
