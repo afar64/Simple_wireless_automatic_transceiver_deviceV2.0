@@ -52,6 +52,8 @@ static lv_obj_t *g_lo_name_label = NULL;
 static lv_obj_t *g_lo_value_label = NULL;
 static lv_obj_t *g_vpp_name_label = NULL;
 static lv_obj_t *g_vpp_value_label = NULL;
+static lv_obj_t *g_rf_name_label = NULL;
+static lv_obj_t *g_rf_value_label = NULL;
 static lv_obj_t *g_rate_name_label = NULL;
 static lv_obj_t *g_rate_value_label = NULL;
 static lv_obj_t *g_param_name_label = NULL;
@@ -136,6 +138,7 @@ static void App_LvglUiRefreshSectionButtons(const AppTxControlSnapshot *snapshot
 static void App_LvglUiRefreshSectionVisibility(void);
 static void App_LvglUiSetActiveSection(AppUiSection section);
 static const char *App_LvglUiSectionTitle(void);
+static void App_LvglUiApplySingleLayout(void);
 static void App_LvglUiRefreshModeVisibility(void);
 static uint8_t App_LvglUiIsFieldEditable(AppUiEditField field);
 static const char *App_LvglUiFieldName(AppUiEditField field);
@@ -209,6 +212,7 @@ void App_LvglUiInit(void)
   App_LvglUiCreateValueRow(panel, "LO freq", 74, &g_lo_name_label, &g_lo_value_label);
   App_LvglUiCreateModeRow(panel, g_ui_config.mode, 116);
   App_LvglUiCreateValueRow(panel, "Amp", 160, &g_vpp_name_label, &g_vpp_value_label);
+  App_LvglUiCreateValueRow(panel, "RF out", 214, &g_rf_name_label, &g_rf_value_label);
   App_LvglUiCreateValueRow(panel, "Rate", 206, &g_rate_name_label, &g_rate_value_label);
   App_LvglUiCreateValueRow(panel, "Param", 252, &g_param_name_label, &g_param_value_label);
   App_LvglUiCreateButtons(panel);
@@ -748,6 +752,8 @@ static void App_LvglUiRefreshValues(void)
 
   lv_obj_set_style_text_color(g_lo_name_label, normal_name, 0);
   lv_obj_set_style_text_color(g_lo_value_label, normal_value, 0);
+  lv_obj_set_style_text_color(g_rf_name_label, normal_name, 0);
+  lv_obj_set_style_text_color(g_rf_value_label, normal_value, 0);
   lv_obj_set_style_text_color(g_preset_name_label, normal_name, 0);
   lv_obj_set_style_text_color(g_preset_value_label, normal_value, 0);
   lv_obj_set_style_text_color(g_sweep_time_name_label, normal_name, 0);
@@ -928,6 +934,13 @@ static void App_LvglUiRefreshState(void)
     }
   }
 
+  if ((g_active_section == APP_UI_SECTION_SINGLE) && (g_run_button_label != NULL))
+  {
+    lv_label_set_text(g_run_button_label, (snapshot.basic.tx_on != 0U) ? "STOP" : "START");
+    lv_label_set_text(g_rf_name_label, "RF out");
+    lv_label_set_text(g_rf_value_label, (snapshot.basic.tx_on != 0U) ? "ON" : "OFF");
+  }
+
   if (g_sweep_button_label != NULL)
   {
     lv_label_set_text(g_sweep_button_label, (snapshot.basic.sweep_on != 0U) ? "SweepOff" : "SweepOn");
@@ -1022,7 +1035,7 @@ static const char *App_LvglUiSectionTitle(void)
   switch (g_active_section)
   {
     case APP_UI_SECTION_SINGLE:
-      return "Single Tone";
+      return "";
     case APP_UI_SECTION_SWEEP:
       return "Sweep Mode";
     case APP_UI_SECTION_MOD:
@@ -1041,8 +1054,7 @@ static void App_LvglUiRefreshSectionVisibility(void)
   uint8_t show_system = (g_active_section == APP_UI_SECTION_SYSTEM) ? 1U : 0U;
   lv_obj_t *show_single_objs[] = {
     g_lo_name_label, g_lo_value_label, g_vpp_name_label, g_vpp_value_label,
-    g_field_button, g_digit_button, g_dec_button, g_inc_button, g_apply_button, g_run_button,
-    g_edit_label, g_state_label
+    g_rf_name_label, g_rf_value_label, g_field_button, g_digit_button, g_run_button
   };
   lv_obj_t *show_sweep_objs[] = {
     g_lo_name_label, g_lo_value_label, g_vpp_name_label, g_vpp_value_label,
@@ -1061,7 +1073,7 @@ static void App_LvglUiRefreshSectionVisibility(void)
     g_debug_status_label, g_debug_button, g_ad9959_status_label, g_f429_status_label, g_state_label
   };
   lv_obj_t *all_objs[] = {
-    g_lo_name_label, g_lo_value_label, g_mode_name_label, g_mode_dropdown,
+    g_lo_name_label, g_lo_value_label, g_rf_name_label, g_rf_value_label, g_mode_name_label, g_mode_dropdown,
     g_vpp_name_label, g_vpp_value_label, g_rate_name_label, g_rate_value_label,
     g_param_name_label, g_param_value_label, g_preset_name_label, g_preset_value_label,
     g_debug_status_label, g_debug_button, g_ad9959_status_label, g_f429_status_label,
@@ -1083,6 +1095,7 @@ static void App_LvglUiRefreshSectionVisibility(void)
 
   if (show_single != 0U)
   {
+    App_LvglUiApplySingleLayout();
     for (i = 0U; i < (uint32_t)(sizeof(show_single_objs) / sizeof(show_single_objs[0])); i++)
     {
       if (show_single_objs[i] != NULL) { lv_obj_clear_flag(show_single_objs[i], LV_OBJ_FLAG_HIDDEN); }
@@ -1111,6 +1124,53 @@ static void App_LvglUiRefreshSectionVisibility(void)
     {
       if (show_system_objs[i] != NULL) { lv_obj_clear_flag(show_system_objs[i], LV_OBJ_FLAG_HIDDEN); }
     }
+  }
+}
+
+static void App_LvglUiApplySingleLayout(void)
+{
+  if (g_section_title_label != NULL)
+  {
+    lv_obj_align(g_section_title_label, LV_ALIGN_TOP_MID, 0, 88);
+  }
+
+  if (g_lo_name_label != NULL)
+  {
+    lv_obj_align(g_lo_name_label, LV_ALIGN_TOP_LEFT, 248, 138);
+  }
+  if (g_lo_value_label != NULL)
+  {
+    lv_obj_align(g_lo_value_label, LV_ALIGN_TOP_LEFT, 390, 138);
+  }
+  if (g_vpp_name_label != NULL)
+  {
+    lv_obj_align(g_vpp_name_label, LV_ALIGN_TOP_LEFT, 248, 184);
+  }
+  if (g_vpp_value_label != NULL)
+  {
+    lv_obj_align(g_vpp_value_label, LV_ALIGN_TOP_LEFT, 390, 184);
+  }
+  if (g_rf_name_label != NULL)
+  {
+    lv_obj_align(g_rf_name_label, LV_ALIGN_TOP_LEFT, 248, 230);
+  }
+  if (g_rf_value_label != NULL)
+  {
+    lv_obj_align(g_rf_value_label, LV_ALIGN_TOP_LEFT, 390, 230);
+  }
+
+  if (g_field_button != NULL)
+  {
+    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 248, -30);
+  }
+  if (g_digit_button != NULL)
+  {
+    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 366, -30);
+  }
+  if (g_run_button != NULL)
+  {
+    lv_obj_set_size(g_run_button, 104, 44);
+    lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 484, -30);
   }
 }
 
