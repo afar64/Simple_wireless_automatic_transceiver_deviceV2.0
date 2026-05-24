@@ -6,6 +6,7 @@
 
 #include "lvgl.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #define APP_UI_PANEL_W 720
@@ -87,6 +88,13 @@ static lv_obj_t *g_dec_button = NULL;
 static lv_obj_t *g_inc_button = NULL;
 static lv_obj_t *g_apply_button = NULL;
 static lv_obj_t *g_run_button = NULL;
+static lv_obj_t *g_keypad_overlay = NULL;
+static lv_obj_t *g_keypad_panel = NULL;
+static lv_obj_t *g_keypad_title_label = NULL;
+static lv_obj_t *g_keypad_current_label = NULL;
+static lv_obj_t *g_keypad_value_label = NULL;
+static lv_obj_t *g_keypad_unit_label = NULL;
+static lv_obj_t *g_keypad_dot_button = NULL;
 
 static AppDacWavegenConfig g_ui_config;
 static uint32_t g_lo_freq_hz = APP_AD9959_TASK_DEFAULT_FREQ_HZ;
@@ -100,6 +108,8 @@ static uint8_t g_lo_freq_dirty = 0U;
 static uint8_t g_mode_dirty = 0U;
 static uint32_t g_state_refresh_last_tick_ms = 0U;
 static AppUiSection g_active_section = APP_UI_SECTION_SINGLE;
+static AppUiEditField g_keypad_field = APP_UI_FIELD_LO_FREQ;
+static char g_keypad_input[24] = {0};
 
 static const uint32_t s_lo_steps_hz[] = {APP_TX_CONTROL_FREQ_STEP_HZ};
 static const uint32_t s_amp_steps_mv[] = {APP_UI_AMP_RMS_STEP_MV};
@@ -128,6 +138,15 @@ static void App_LvglUiCreateSelfTestBadge(lv_obj_t *parent);
 static void App_LvglUiCreateSweepTimeBadge(lv_obj_t *parent);
 static void App_LvglUiCreateSweepRangeBadge(lv_obj_t *parent);
 static void App_LvglUiCreateButtons(lv_obj_t *parent);
+static void App_LvglUiCreateKeypad(lv_obj_t *parent);
+static lv_obj_t *App_LvglUiCreateActionButton(lv_obj_t *parent,
+                                              const char *text,
+                                              int32_t x,
+                                              int32_t y,
+                                              int32_t w,
+                                              int32_t h,
+                                              lv_event_cb_t event_cb,
+                                              void *user_data);
 static void App_LvglUiResetModeConfig(AppDacWavegenMode mode);
 static uint8_t App_LvglUiIsCwMode(AppDacWavegenMode mode);
 static void App_LvglUiEnsureEditableField(void);
@@ -149,6 +168,10 @@ static uint32_t App_LvglUiGetFieldValue(AppUiEditField field);
 static void App_LvglUiSetFieldValue(AppUiEditField field, uint32_t value);
 static void App_LvglUiAdjustSelectedField(int32_t direction);
 static void App_LvglUiApplyConfig(void);
+static void App_LvglUiOpenKeypad(AppUiEditField field);
+static void App_LvglUiCloseKeypad(void);
+static void App_LvglUiRefreshKeypad(void);
+static uint8_t App_LvglUiTryParseKeypadValue(AppUiEditField field, const char *text, uint32_t *value_out);
 static void App_LvglUiOnModeChanged(lv_event_t *e);
 static void App_LvglUiOnFieldClicked(lv_event_t *e);
 static void App_LvglUiOnDigitClicked(lv_event_t *e);
@@ -168,6 +191,11 @@ static void App_LvglUiOnContinuousClicked(lv_event_t *e);
 static void App_LvglUiOnSweepSectionClicked(lv_event_t *e);
 static void App_LvglUiOnModClicked(lv_event_t *e);
 static void App_LvglUiOnSystemClicked(lv_event_t *e);
+static void App_LvglUiOnKeypadDigitClicked(lv_event_t *e);
+static void App_LvglUiOnKeypadBackClicked(lv_event_t *e);
+static void App_LvglUiOnKeypadCancelClicked(lv_event_t *e);
+static void App_LvglUiOnKeypadOkClicked(lv_event_t *e);
+static void App_LvglUiOnKeypadDeleteClicked(lv_event_t *e);
 static const char *App_LvglUiModeText(AppDacWavegenMode mode);
 static int App_LvglUiSendCurrentModeToWinner(void);
 static uint8_t App_LvglUiIsDebugLocked(void);
@@ -216,6 +244,7 @@ void App_LvglUiInit(void)
   App_LvglUiCreateValueRow(panel, "Rate", 206, &g_rate_name_label, &g_rate_value_label);
   App_LvglUiCreateValueRow(panel, "Param", 252, &g_param_name_label, &g_param_value_label);
   App_LvglUiCreateButtons(panel);
+  App_LvglUiCreateKeypad(panel);
 
   App_LvglUiEnsureEditableField();
   App_LvglUiRefreshValues();
@@ -617,6 +646,121 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
   lv_obj_add_event_cb(g_run_button, App_LvglUiOnRunClicked, LV_EVENT_CLICKED, NULL);
   g_run_button_label = lv_label_create(g_run_button);
   lv_obj_center(g_run_button_label);
+}
+
+static lv_obj_t *App_LvglUiCreateActionButton(lv_obj_t *parent,
+                                              const char *text,
+                                              int32_t x,
+                                              int32_t y,
+                                              int32_t w,
+                                              int32_t h,
+                                              lv_event_cb_t event_cb,
+                                              void *user_data)
+{
+  lv_obj_t *button = lv_button_create(parent);
+  lv_obj_t *label = lv_label_create(button);
+
+  lv_obj_set_size(button, w, h);
+  lv_obj_align(button, LV_ALIGN_TOP_LEFT, x, y);
+  lv_obj_add_event_cb(button, event_cb, LV_EVENT_CLICKED, user_data);
+  lv_obj_set_style_radius(button, 12, 0);
+  lv_obj_set_style_bg_color(button, lv_color_hex(APP_UI_COLOR_BUTTON_IDLE), 0);
+  lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(button, 1, 0);
+  lv_obj_set_style_border_color(button, lv_color_hex(APP_UI_COLOR_PANEL_BORDER), 0);
+  lv_obj_set_style_shadow_width(button, 0, 0);
+  lv_label_set_text(label, text);
+  lv_obj_set_style_text_color(label, lv_color_hex(APP_UI_COLOR_TEXT_MAIN), 0);
+  lv_obj_center(label);
+
+  return button;
+}
+
+static void App_LvglUiCreateKeypad(lv_obj_t *parent)
+{
+  static const char *digit_texts[] = {"7", "8", "9", "4", "5", "6", "1", "2", "3", "0", "."};
+  int32_t i;
+
+  g_keypad_overlay = lv_obj_create(parent);
+  lv_obj_set_size(g_keypad_overlay, APP_UI_PANEL_W, APP_UI_PANEL_H);
+  lv_obj_align(g_keypad_overlay, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_style_bg_color(g_keypad_overlay, lv_color_hex(0x0C131D), 0);
+  lv_obj_set_style_bg_opa(g_keypad_overlay, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(g_keypad_overlay, 0, 0);
+  lv_obj_set_style_radius(g_keypad_overlay, 8, 0);
+  lv_obj_set_style_shadow_width(g_keypad_overlay, 0, 0);
+  lv_obj_remove_flag(g_keypad_overlay, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(g_keypad_overlay, LV_OBJ_FLAG_HIDDEN);
+
+  g_keypad_title_label = lv_label_create(g_keypad_overlay);
+  lv_obj_set_style_text_color(g_keypad_title_label, lv_color_hex(APP_UI_COLOR_TEXT_MAIN), 0);
+  lv_obj_align(g_keypad_title_label, LV_ALIGN_TOP_LEFT, 34, 24);
+
+  g_keypad_unit_label = lv_label_create(g_keypad_overlay);
+  lv_obj_set_style_text_color(g_keypad_unit_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
+  lv_obj_align(g_keypad_unit_label, LV_ALIGN_TOP_RIGHT, -34, 24);
+
+  g_keypad_current_label = lv_label_create(g_keypad_overlay);
+  lv_obj_set_width(g_keypad_current_label, 430);
+  lv_obj_set_style_text_color(g_keypad_current_label, lv_color_hex(APP_UI_COLOR_TEXT_SUB), 0);
+  lv_obj_align(g_keypad_current_label, LV_ALIGN_TOP_LEFT, 34, 56);
+
+  g_keypad_value_label = lv_label_create(g_keypad_overlay);
+  lv_obj_set_width(g_keypad_value_label, 430);
+  lv_obj_set_style_text_color(g_keypad_value_label, lv_color_hex(APP_UI_COLOR_ACCENT), 0);
+  lv_obj_set_style_text_align(g_keypad_value_label, LV_TEXT_ALIGN_LEFT, 0);
+  lv_obj_align(g_keypad_value_label, LV_ALIGN_TOP_LEFT, 34, 90);
+
+  g_keypad_panel = g_keypad_overlay;
+
+  for (i = 0; i < 11; ++i)
+  {
+    int32_t col;
+    int32_t row;
+    int32_t x;
+    int32_t y;
+
+    if (i < 9)
+    {
+      row = i / 3;
+      col = i % 3;
+    }
+    else
+    {
+      row = 3;
+      col = (i == 9) ? 1 : 2;
+    }
+
+    x = 170 + (col * 82);
+    y = 154 + (row * 52);
+    if (i == 10)
+    {
+      g_keypad_dot_button = App_LvglUiCreateActionButton(g_keypad_panel,
+                                                         digit_texts[i],
+                                                         x,
+                                                         y,
+                                                         68,
+                                                         44,
+                                                         App_LvglUiOnKeypadDigitClicked,
+                                                         (void *)digit_texts[i]);
+    }
+    else
+    {
+      (void)App_LvglUiCreateActionButton(g_keypad_panel,
+                                         digit_texts[i],
+                                         x,
+                                         y,
+                                         68,
+                                         44,
+                                         App_LvglUiOnKeypadDigitClicked,
+                                         (void *)digit_texts[i]);
+    }
+  }
+
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Back",   458, 154, 142, 44, App_LvglUiOnKeypadBackClicked, NULL);
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Cancel", 458, 206, 142, 44, App_LvglUiOnKeypadCancelClicked, NULL);
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "OK",     458, 258, 142, 44, App_LvglUiOnKeypadOkClicked, NULL);
+  (void)App_LvglUiCreateActionButton(g_keypad_panel, "Del",    458, 310, 142, 44, App_LvglUiOnKeypadDeleteClicked, NULL);
 }
 
 static void App_LvglUiResetModeConfig(AppDacWavegenMode mode)
@@ -1499,6 +1643,165 @@ static void App_LvglUiApplyConfig(void)
   App_LvglUiRefreshState();
 }
 
+static void App_LvglUiOpenKeypad(AppUiEditField field)
+{
+  g_keypad_field = field;
+  App_LvglUiSelectField(field);
+  g_keypad_input[0] = '\0';
+
+  App_LvglUiRefreshKeypad();
+  lv_obj_clear_flag(g_keypad_overlay, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(g_keypad_overlay);
+}
+
+static void App_LvglUiCloseKeypad(void)
+{
+  if (g_keypad_overlay != NULL)
+  {
+    lv_obj_add_flag(g_keypad_overlay, LV_OBJ_FLAG_HIDDEN);
+  }
+}
+
+static void App_LvglUiRefreshKeypad(void)
+{
+  uint32_t current_value;
+
+  if ((g_keypad_overlay == NULL) || (g_keypad_title_label == NULL) ||
+      (g_keypad_value_label == NULL) || (g_keypad_unit_label == NULL) ||
+      (g_keypad_current_label == NULL))
+  {
+    return;
+  }
+
+  current_value = App_LvglUiGetFieldValue(g_keypad_field);
+
+  if (g_keypad_field == APP_UI_FIELD_LO_FREQ)
+  {
+    lv_label_set_text(g_keypad_title_label, "Set FREQ");
+    lv_label_set_text(g_keypad_unit_label, "MHz");
+    lv_label_set_text_fmt(g_keypad_current_label,
+                          "Current: %lu.%06lu MHz",
+                          (unsigned long)(current_value / 1000000UL),
+                          (unsigned long)(current_value % 1000000UL));
+    if (g_keypad_dot_button != NULL)
+    {
+      lv_obj_clear_flag(g_keypad_dot_button, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+  else
+  {
+    lv_label_set_text(g_keypad_title_label, "Set AMP");
+    lv_label_set_text(g_keypad_unit_label, "mVrms");
+    lv_label_set_text_fmt(g_keypad_current_label,
+                          "Current: %lu mVrms",
+                          (unsigned long)current_value);
+    if (g_keypad_dot_button != NULL)
+    {
+      lv_obj_add_flag(g_keypad_dot_button, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+
+  if (g_keypad_input[0] == '\0')
+  {
+    lv_label_set_text(g_keypad_value_label, "_");
+  }
+  else
+  {
+    lv_label_set_text(g_keypad_value_label, g_keypad_input);
+  }
+}
+
+static uint8_t App_LvglUiTryParseKeypadValue(AppUiEditField field, const char *text, uint32_t *value_out)
+{
+  uint32_t min_value = 0U;
+  uint32_t max_value = 0U;
+  uint64_t parsed_value = 0ULL;
+  uint32_t i;
+
+  if ((text == NULL) || (text[0] == '\0') || (value_out == NULL))
+  {
+    return 0U;
+  }
+
+  App_LvglUiGetFieldRange(field, &min_value, &max_value);
+  if (field == APP_UI_FIELD_LO_FREQ)
+  {
+    uint64_t int_part = 0ULL;
+    uint64_t frac_part = 0ULL;
+    uint32_t frac_digits = 0U;
+    uint8_t seen_dot = 0U;
+    uint8_t has_digit = 0U;
+
+    for (i = 0U; text[i] != '\0'; ++i)
+    {
+      char c = text[i];
+      if ((c >= '0') && (c <= '9'))
+      {
+        has_digit = 1U;
+        if (seen_dot == 0U)
+        {
+          int_part = (int_part * 10ULL) + (uint64_t)(c - '0');
+        }
+        else
+        {
+          if (frac_digits >= 6U)
+          {
+            return 0U;
+          }
+          frac_part = (frac_part * 10ULL) + (uint64_t)(c - '0');
+          frac_digits++;
+        }
+      }
+      else if ((c == '.') && (seen_dot == 0U))
+      {
+        seen_dot = 1U;
+      }
+      else
+      {
+        return 0U;
+      }
+    }
+
+    if (has_digit == 0U)
+    {
+      return 0U;
+    }
+
+    while (frac_digits < 6U)
+    {
+      frac_part *= 10ULL;
+      frac_digits++;
+    }
+
+    parsed_value = (int_part * 1000000ULL) + frac_part;
+  }
+  else
+  {
+    for (i = 0U; text[i] != '\0'; ++i)
+    {
+      char c = text[i];
+      if ((c < '0') || (c > '9'))
+      {
+        return 0U;
+      }
+      parsed_value = (parsed_value * 10ULL) + (uint64_t)(c - '0');
+    }
+  }
+
+  if (parsed_value < (uint64_t)min_value)
+  {
+    parsed_value = (uint64_t)min_value;
+  }
+
+  if (parsed_value > (uint64_t)max_value)
+  {
+    parsed_value = (uint64_t)max_value;
+  }
+
+  *value_out = (uint32_t)parsed_value;
+  return 1U;
+}
+
 static void App_LvglUiOnModeChanged(lv_event_t *e)
 {
   AppDacWavegenMode mode;
@@ -1532,7 +1835,7 @@ static void App_LvglUiOnFieldClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
-  App_LvglUiSelectField(APP_UI_FIELD_LO_FREQ);
+  App_LvglUiOpenKeypad(APP_UI_FIELD_LO_FREQ);
 }
 
 static void App_LvglUiOnDigitClicked(lv_event_t *e)
@@ -1543,7 +1846,7 @@ static void App_LvglUiOnDigitClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
-  App_LvglUiSelectField(APP_UI_FIELD_VPP);
+  App_LvglUiOpenKeypad(APP_UI_FIELD_VPP);
 }
 
 static void App_LvglUiOnDecClicked(lv_event_t *e)
@@ -1827,6 +2130,86 @@ static void App_LvglUiOnSystemClicked(lv_event_t *e)
   App_LvglUiSetActiveSection(APP_UI_SECTION_SYSTEM);
   App_LvglUiRefreshValues();
   App_LvglUiRefreshState();
+}
+
+static void App_LvglUiOnKeypadDigitClicked(lv_event_t *e)
+{
+  const char *text = (const char *)lv_event_get_user_data(e);
+  size_t len;
+
+  if ((text == NULL) || (text[0] == '\0'))
+  {
+    return;
+  }
+
+  len = strlen(g_keypad_input);
+  if ((len + 1U) >= sizeof(g_keypad_input))
+  {
+    return;
+  }
+
+  if ((text[0] == '.') && (g_keypad_field != APP_UI_FIELD_LO_FREQ))
+  {
+    return;
+  }
+
+  if ((text[0] == '.') && (strchr(g_keypad_input, '.') != NULL))
+  {
+    return;
+  }
+
+  if ((text[0] == '.') && (len == 0U))
+  {
+    g_keypad_input[len++] = '0';
+  }
+
+  g_keypad_input[len] = text[0];
+  g_keypad_input[len + 1U] = '\0';
+  App_LvglUiRefreshKeypad();
+}
+
+static void App_LvglUiOnKeypadBackClicked(lv_event_t *e)
+{
+  size_t len;
+
+  (void)e;
+  len = strlen(g_keypad_input);
+  if (len == 0U)
+  {
+    return;
+  }
+
+  g_keypad_input[len - 1U] = '\0';
+  App_LvglUiRefreshKeypad();
+}
+
+static void App_LvglUiOnKeypadCancelClicked(lv_event_t *e)
+{
+  (void)e;
+  App_LvglUiCloseKeypad();
+}
+
+static void App_LvglUiOnKeypadOkClicked(lv_event_t *e)
+{
+  uint32_t value = 0U;
+
+  (void)e;
+  if (App_LvglUiTryParseKeypadValue(g_keypad_field, g_keypad_input, &value) == 0U)
+  {
+    App_LvglUiRefreshKeypad();
+    return;
+  }
+
+  App_LvglUiSetFieldValue(g_keypad_field, value);
+  App_LvglUiCloseKeypad();
+  App_LvglUiApplyConfig();
+}
+
+static void App_LvglUiOnKeypadDeleteClicked(lv_event_t *e)
+{
+  (void)e;
+  g_keypad_input[0] = '\0';
+  App_LvglUiRefreshKeypad();
 }
 
 static int App_LvglUiSendCurrentModeToWinner(void)
