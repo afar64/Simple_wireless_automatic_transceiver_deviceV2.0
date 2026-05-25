@@ -59,6 +59,11 @@ int App_TxControl_SetSweepRangeHz(uint32_t start_hz, uint32_t stop_hz);
 void App_TxControl_Service(uint32_t now_ms);
 int App_TxControl_SetDebugModeEnabled(uint8_t enable);
 uint8_t App_TxControl_GetDebugModeEnabled(void);
+int App_TxControl_StartCalibrationOutput(void);
+int App_TxControl_StopCalibrationOutput(void);
+uint8_t App_TxControl_GetCalibrationOutputEnabled(void);
+int App_TxControl_SetLoErrorHz(int32_t error_hz);
+int32_t App_TxControl_GetLoErrorHz(void);
 
 #ifdef __cplusplus
 }

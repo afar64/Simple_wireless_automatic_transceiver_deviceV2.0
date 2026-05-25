@@ -14,6 +14,8 @@ static uint32_t s_sweep_stop_hz = APP_TX_CONTROL_SWEEP_STOP_DEFAULT_HZ;
 static uint8_t s_desired_valid = 0U;
 static uint8_t s_sweep_enabled = 0U;
 static uint8_t s_debug_mode_enabled = 0U;
+static uint8_t s_calibration_output_enabled = 0U;
+static int32_t s_lo_error_hz = 0;
 static uint32_t s_sweep_last_tick_ms = 0U;
 static uint32_t s_sweep_start_tick_ms = 0U;
 
@@ -64,6 +66,23 @@ static uint32_t App_TxControlClampSweepPeriodMs(uint32_t period_ms)
   return period_ms;
 }
 
+static uint32_t App_TxControlApplyFrequencyErrorHz(uint32_t freq_hz)
+{
+  int64_t adjusted = (int64_t)freq_hz + (int64_t)s_lo_error_hz;
+
+  if (adjusted < (int64_t)APP_TX_CONTROL_FREQ_MIN_HZ)
+  {
+    return APP_TX_CONTROL_FREQ_MIN_HZ;
+  }
+
+  if (adjusted > (int64_t)APP_TX_CONTROL_FREQ_MAX_HZ)
+  {
+    return APP_TX_CONTROL_FREQ_MAX_HZ;
+  }
+
+  return (uint32_t)adjusted;
+}
+
 uint32_t App_TxControl_ClampFrequencyHz(uint32_t freq_hz)
 {
   if (freq_hz < APP_TX_CONTROL_FREQ_MIN_HZ)
@@ -77,15 +96,6 @@ uint32_t App_TxControl_ClampFrequencyHz(uint32_t freq_hz)
   }
 
   return freq_hz;
-}
-
-static uint32_t App_TxControlAlignFrequencyHz(uint32_t freq_hz)
-{
-  uint32_t clamped = App_TxControl_ClampFrequencyHz(freq_hz);
-  uint32_t offset = clamped - APP_TX_CONTROL_FREQ_MIN_HZ;
-
-  offset = (offset / APP_TX_CONTROL_FREQ_STEP_HZ) * APP_TX_CONTROL_FREQ_STEP_HZ;
-  return APP_TX_CONTROL_FREQ_MIN_HZ + offset;
 }
 
 static void App_TxControlLoadDesiredFromHardware(void)
@@ -119,7 +129,7 @@ static void App_TxControlApplyLoRouting(uint8_t enable_target_channel)
     target_amp_code = App_TxControlMapCwAmplitudeCode(s_desired_config.vpp_mv);
   }
 
-  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControl_ClampFrequencyHz(s_desired_lo_freq_hz));
+  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(s_desired_lo_freq_hz));
   (void)App_LoTaskSetChannelAmplitudeCode(target_ch, target_amp_code);
   (void)App_LoTaskSetChannelEnable(target_ch, enable_target_channel);
   (void)App_LoTaskSetChannelEnable(other_ch, 0U);
@@ -129,7 +139,7 @@ static void App_TxControlApplyCurrentFrequencyOnly(void)
 {
   uint8_t target_ch = App_TxControlGetLoChannelForMode(s_desired_config.mode);
 
-  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControl_ClampFrequencyHz(s_desired_lo_freq_hz));
+  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(s_desired_lo_freq_hz));
 }
 
 void App_TxControl_Init(void)
@@ -137,15 +147,13 @@ void App_TxControl_Init(void)
   App_TxControlLoadDesiredFromHardware();
   s_preset_lo_freq_hz = App_TxControl_ClampFrequencyHz(s_preset_lo_freq_hz);
   s_sweep_period_ms = App_TxControlClampSweepPeriodMs(s_sweep_period_ms);
-  s_sweep_start_hz = App_TxControlAlignFrequencyHz(s_sweep_start_hz);
-  s_sweep_stop_hz = App_TxControlAlignFrequencyHz(s_sweep_stop_hz);
+  s_sweep_start_hz = App_TxControl_ClampFrequencyHz(s_sweep_start_hz);
+  s_sweep_stop_hz = App_TxControl_ClampFrequencyHz(s_sweep_stop_hz);
   App_TxControlUpdateRelayForMode(s_desired_config.mode);
 }
 
 void App_TxControl_GetSnapshot(AppTxControlSnapshot *snapshot)
 {
-  uint8_t ch;
-
   if (snapshot == NULL)
   {
     return;
@@ -153,9 +161,8 @@ void App_TxControl_GetSnapshot(AppTxControlSnapshot *snapshot)
 
   memset(snapshot, 0, sizeof(*snapshot));
   App_DacWavegenGetStatus(&snapshot->dac_status);
-  ch = App_TxControlGetLoChannelForMode(snapshot->dac_status.config.mode);
   snapshot->basic.mode = snapshot->dac_status.config.mode;
-  snapshot->basic.freq_hz = App_TxControl_ClampFrequencyHz(App_LoTaskGetChannelFrequencyHz(ch));
+  snapshot->basic.freq_hz = App_TxControl_ClampFrequencyHz(s_desired_lo_freq_hz);
   snapshot->basic.amplitude_mv = snapshot->dac_status.config.vpp_mv;
   snapshot->basic.sweep_on = s_sweep_enabled;
   if (App_TxControlIsCwMode(snapshot->basic.mode) != 0U)
@@ -267,6 +274,7 @@ int App_TxControl_Start(void)
 int App_TxControl_Stop(void)
 {
   s_sweep_enabled = 0U;
+  s_calibration_output_enabled = 0U;
   App_DacWavegenStop();
   (void)App_LoTaskSetChannelEnable(APP_AD9959_TASK_MOD_CHANNEL, 0U);
   (void)App_LoTaskSetChannelEnable(APP_AD9959_TASK_CW_CHANNEL, 0U);
@@ -342,8 +350,8 @@ uint32_t App_TxControl_GetSweepStopHz(void)
 
 int App_TxControl_SetSweepRangeHz(uint32_t start_hz, uint32_t stop_hz)
 {
-  uint32_t start_aligned = App_TxControlAlignFrequencyHz(start_hz);
-  uint32_t stop_aligned = App_TxControlAlignFrequencyHz(stop_hz);
+  uint32_t start_aligned = App_TxControl_ClampFrequencyHz(start_hz);
+  uint32_t stop_aligned = App_TxControl_ClampFrequencyHz(stop_hz);
 
   if (start_aligned > stop_aligned)
   {
@@ -369,10 +377,9 @@ int App_TxControl_SetSweepRangeHz(uint32_t start_hz, uint32_t stop_hz)
 void App_TxControl_Service(uint32_t now_ms)
 {
   uint32_t period_ms;
-  uint32_t sweep_steps;
   uint32_t elapsed_ms;
-  uint32_t step_index;
   uint32_t next_freq_hz;
+  uint32_t sweep_span_hz;
 
   if (s_sweep_enabled == 0U)
   {
@@ -392,7 +399,6 @@ void App_TxControl_Service(uint32_t now_ms)
 
   s_sweep_last_tick_ms = now_ms;
   period_ms = App_TxControlClampSweepPeriodMs(s_sweep_period_ms);
-  sweep_steps = ((s_sweep_stop_hz - s_sweep_start_hz) / APP_TX_CONTROL_FREQ_STEP_HZ) + 1UL;
   elapsed_ms = now_ms - s_sweep_start_tick_ms;
 
   if (period_ms == 0U)
@@ -401,13 +407,13 @@ void App_TxControl_Service(uint32_t now_ms)
   }
 
   elapsed_ms %= period_ms;
-  step_index = (uint32_t)(((uint64_t)elapsed_ms * (uint64_t)sweep_steps) / (uint64_t)period_ms);
-  if (step_index >= sweep_steps)
+  sweep_span_hz = s_sweep_stop_hz - s_sweep_start_hz;
+  next_freq_hz = s_sweep_start_hz;
+  if (sweep_span_hz != 0U)
   {
-    step_index = sweep_steps - 1UL;
+    next_freq_hz += (uint32_t)(((uint64_t)elapsed_ms * (uint64_t)sweep_span_hz) / (uint64_t)period_ms);
   }
 
-  next_freq_hz = s_sweep_start_hz + (step_index * APP_TX_CONTROL_FREQ_STEP_HZ);
   if (next_freq_hz != s_desired_lo_freq_hz)
   {
     s_desired_lo_freq_hz = next_freq_hz;
@@ -424,4 +430,45 @@ int App_TxControl_SetDebugModeEnabled(uint8_t enable)
 uint8_t App_TxControl_GetDebugModeEnabled(void)
 {
   return s_debug_mode_enabled;
+}
+
+int App_TxControl_StartCalibrationOutput(void)
+{
+  uint32_t calibration_freq_hz = App_TxControlApplyFrequencyErrorHz(120000000UL);
+
+  App_TxControlEnsureDesiredLoaded();
+  s_sweep_enabled = 0U;
+  s_calibration_output_enabled = 1U;
+  App_DacWavegenStop();
+  App_TxControlUpdateRelayForMode(APP_DAC_WAVE_MODE_CW);
+  (void)App_LoTaskSetChannelEnable(APP_AD9959_TASK_MOD_CHANNEL, 0U);
+  (void)App_LoTaskSetChannelFrequencyHz(APP_AD9959_TASK_CW_CHANNEL, calibration_freq_hz);
+  (void)App_LoTaskSetChannelAmplitudeCode(APP_AD9959_TASK_CW_CHANNEL, 1023U);
+  (void)App_LoTaskSetChannelEnable(APP_AD9959_TASK_CW_CHANNEL, 1U);
+  return 0;
+}
+
+int App_TxControl_StopCalibrationOutput(void)
+{
+  s_calibration_output_enabled = 0U;
+  App_DacWavegenStop();
+  (void)App_LoTaskSetChannelEnable(APP_AD9959_TASK_MOD_CHANNEL, 0U);
+  (void)App_LoTaskSetChannelEnable(APP_AD9959_TASK_CW_CHANNEL, 0U);
+  return 0;
+}
+
+uint8_t App_TxControl_GetCalibrationOutputEnabled(void)
+{
+  return s_calibration_output_enabled;
+}
+
+int App_TxControl_SetLoErrorHz(int32_t error_hz)
+{
+  s_lo_error_hz = error_hz;
+  return 0;
+}
+
+int32_t App_TxControl_GetLoErrorHz(void)
+{
+  return s_lo_error_hz;
 }

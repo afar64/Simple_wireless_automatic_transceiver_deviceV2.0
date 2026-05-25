@@ -122,11 +122,14 @@ static uint32_t g_state_refresh_last_tick_ms = 0U;
 static AppUiSection g_active_section = APP_UI_SECTION_SINGLE;
 static AppUiKeypadTarget g_keypad_target = APP_UI_KEYPAD_LO_FREQ;
 static char g_keypad_input[24] = {0};
+static int32_t g_system_lo_error_hz = 0;
+static uint8_t g_system_error_step_index = 0U;
 
 static const uint32_t s_lo_steps_hz[] = {APP_TX_CONTROL_FREQ_STEP_HZ};
 static const uint32_t s_amp_steps_mv[] = {APP_UI_AMP_RMS_STEP_MV};
 static const uint32_t s_rate_steps_hz[] = {10000UL, 1000UL, 100UL, 10UL, 1UL};
 static const uint32_t s_param_steps_pct[] = {10U, 1U};
+static const uint32_t s_system_error_steps_hz[] = {1UL, 10UL, 100UL, 1000UL};
 
 static uint32_t App_LvglUiInternalToAmpRmsMv(uint16_t internal_mv);
 static uint16_t App_LvglUiAmpRmsMvToInternal(uint32_t amp_rms_mv);
@@ -172,9 +175,13 @@ static const char *App_LvglUiSectionTitle(void);
 static void App_LvglUiApplySingleLayout(void);
 static void App_LvglUiApplySweepLayout(void);
 static void App_LvglUiApplyModLayout(void);
+static void App_LvglUiApplySystemLayout(void);
 static void App_LvglUiRefreshModeVisibility(void);
 static const char *App_LvglUiModRateButtonText(void);
 static const char *App_LvglUiModParamButtonText(void);
+static uint32_t App_LvglUiGetSystemErrorStepHz(void);
+static void App_LvglUiAdjustSystemError(int32_t direction);
+static void App_LvglUiApplySystemErrorNow(void);
 static uint8_t App_LvglUiIsFieldEditable(AppUiEditField field);
 static const char *App_LvglUiFieldName(AppUiEditField field);
 static uint32_t App_LvglUiGetFieldStepCount(AppUiEditField field);
@@ -242,6 +249,7 @@ void App_LvglUiInit(void)
   g_sweep_period_ms = App_TxControl_GetSweepPeriodMs();
   g_sweep_start_hz = App_TxControl_GetSweepStartHz();
   g_sweep_stop_hz = App_TxControl_GetSweepStopHz();
+  g_system_lo_error_hz = App_TxControl_GetLoErrorHz();
   g_active_section = (snapshot.basic.sweep_on != 0U) ? APP_UI_SECTION_SWEEP :
                      ((App_LvglUiIsCwMode(snapshot.basic.mode) != 0U) ? APP_UI_SECTION_SINGLE : APP_UI_SECTION_MOD);
 
@@ -841,6 +849,26 @@ static void App_LvglUiRefreshValues(void)
   {
     lv_label_set_text(g_section_title_label, App_LvglUiSectionTitle());
   }
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    lv_label_set_text(g_lo_name_label, "Cal freq");
+    lv_label_set_text(g_lo_value_label, "120.000000 MHz");
+    lv_label_set_text(g_vpp_name_label, "CH1 amp");
+    lv_label_set_text(g_vpp_value_label, "1023");
+    lv_label_set_text(g_rf_name_label, "Error freq");
+    lv_label_set_text_fmt(g_rf_value_label, "%ld Hz", (long)g_system_lo_error_hz);
+    lv_label_set_text(g_rate_name_label, "Step");
+    lv_label_set_text_fmt(g_rate_value_label, "%lu Hz", (unsigned long)App_LvglUiGetSystemErrorStepHz());
+    lv_obj_set_style_text_color(g_lo_name_label, normal_name, 0);
+    lv_obj_set_style_text_color(g_lo_value_label, normal_value, 0);
+    lv_obj_set_style_text_color(g_vpp_name_label, normal_name, 0);
+    lv_obj_set_style_text_color(g_vpp_value_label, normal_value, 0);
+    lv_obj_set_style_text_color(g_rf_name_label, selected, 0);
+    lv_obj_set_style_text_color(g_rf_value_label, selected, 0);
+    lv_obj_set_style_text_color(g_rate_name_label, normal_name, 0);
+    lv_obj_set_style_text_color(g_rate_value_label, normal_value, 0);
+    return;
+  }
   if (g_mode_dropdown != NULL)
   {
     lv_dropdown_set_selected(g_mode_dropdown,
@@ -964,6 +992,12 @@ static void App_LvglUiRefreshEditState(void)
 {
   uint32_t step = App_LvglUiGetFieldStepValue(g_selected_field, g_digit_index);
 
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    lv_label_set_text_fmt(g_edit_label, "Cal step %lu Hz", (unsigned long)App_LvglUiGetSystemErrorStepHz());
+    return;
+  }
+
   if (App_LvglUiIsCwMode(g_ui_config.mode) != 0U)
   {
     if (g_selected_field == APP_UI_FIELD_LO_FREQ)
@@ -1051,7 +1085,13 @@ static void App_LvglUiRefreshState(void)
 
   if (g_active_section == APP_UI_SECTION_SYSTEM)
   {
-    lv_label_set_text(g_state_label, "System status");
+    if (g_run_button_label != NULL)
+    {
+      lv_label_set_text(g_run_button_label,
+                        (App_TxControl_GetCalibrationOutputEnabled() != 0U) ? "STOP" : "START");
+    }
+    lv_label_set_text(g_state_label,
+                      (App_TxControl_GetCalibrationOutputEnabled() != 0U) ? "Calibration output ON" : "Calibration output OFF");
     return;
   }
 
@@ -1222,7 +1262,7 @@ static const char *App_LvglUiSectionTitle(void)
       return "Modulation";
     case APP_UI_SECTION_SYSTEM:
     default:
-      return "System";
+      return "Calibration";
   }
 }
 
@@ -1251,7 +1291,12 @@ static void App_LvglUiRefreshSectionVisibility(void)
     g_field_button, g_digit_button, g_dec_button, g_run_button
   };
   lv_obj_t *show_system_objs[] = {
-    g_debug_status_label, g_debug_button, g_ad9959_status_label, g_f429_status_label, g_state_label
+    g_lo_name_label, g_lo_value_label,
+    g_vpp_name_label, g_vpp_value_label,
+    g_rf_name_label, g_rf_value_label,
+    g_rate_name_label, g_rate_value_label,
+    g_field_button, g_digit_button, g_dec_button, g_run_button,
+    g_edit_label
   };
   lv_obj_t *all_objs[] = {
     g_lo_name_label, g_lo_value_label, g_rf_name_label, g_rf_value_label, g_mode_name_label, g_mode_dropdown,
@@ -1303,6 +1348,7 @@ static void App_LvglUiRefreshSectionVisibility(void)
 
   if (show_system != 0U)
   {
+    App_LvglUiApplySystemLayout();
     for (i = 0U; i < (uint32_t)(sizeof(show_system_objs) / sizeof(show_system_objs[0])); i++)
     {
       if (show_system_objs[i] != NULL) { lv_obj_clear_flag(show_system_objs[i], LV_OBJ_FLAG_HIDDEN); }
@@ -1508,6 +1554,77 @@ static void App_LvglUiApplyModLayout(void)
   }
 }
 
+static void App_LvglUiApplySystemLayout(void)
+{
+  lv_obj_t *label;
+
+  label = (g_field_button != NULL) ? lv_obj_get_child(g_field_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, "ERR-"); }
+  label = (g_digit_button != NULL) ? lv_obj_get_child(g_digit_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, "ERR+"); }
+  label = (g_dec_button != NULL) ? lv_obj_get_child(g_dec_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, "BASE"); }
+  label = (g_run_button != NULL) ? lv_obj_get_child(g_run_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, "START"); }
+
+  if (g_section_title_label != NULL)
+  {
+    lv_obj_align(g_section_title_label, LV_ALIGN_TOP_MID, 0, 88);
+  }
+  if (g_lo_name_label != NULL)
+  {
+    lv_obj_align(g_lo_name_label, LV_ALIGN_TOP_LEFT, 248, 138);
+  }
+  if (g_lo_value_label != NULL)
+  {
+    lv_obj_align(g_lo_value_label, LV_ALIGN_TOP_LEFT, 390, 138);
+  }
+  if (g_vpp_name_label != NULL)
+  {
+    lv_obj_align(g_vpp_name_label, LV_ALIGN_TOP_LEFT, 248, 184);
+  }
+  if (g_vpp_value_label != NULL)
+  {
+    lv_obj_align(g_vpp_value_label, LV_ALIGN_TOP_LEFT, 390, 184);
+  }
+  if (g_rf_name_label != NULL)
+  {
+    lv_obj_align(g_rf_name_label, LV_ALIGN_TOP_LEFT, 248, 230);
+  }
+  if (g_rf_value_label != NULL)
+  {
+    lv_obj_align(g_rf_value_label, LV_ALIGN_TOP_LEFT, 390, 230);
+  }
+  if (g_rate_name_label != NULL)
+  {
+    lv_obj_align(g_rate_name_label, LV_ALIGN_TOP_LEFT, 248, 276);
+  }
+  if (g_rate_value_label != NULL)
+  {
+    lv_obj_align(g_rate_value_label, LV_ALIGN_TOP_LEFT, 390, 276);
+  }
+  if (g_field_button != NULL)
+  {
+    lv_obj_set_size(g_field_button, 96, 44);
+    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 220, -30);
+  }
+  if (g_digit_button != NULL)
+  {
+    lv_obj_set_size(g_digit_button, 96, 44);
+    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 328, -30);
+  }
+  if (g_dec_button != NULL)
+  {
+    lv_obj_set_size(g_dec_button, 96, 44);
+    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 436, -30);
+  }
+  if (g_run_button != NULL)
+  {
+    lv_obj_set_size(g_run_button, 104, 44);
+    lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 548, -30);
+  }
+}
+
 static const char *App_LvglUiModRateButtonText(void)
 {
   if ((g_ui_config.mode == APP_DAC_WAVE_MODE_AM) || (g_ui_config.mode == APP_DAC_WAVE_MODE_FM))
@@ -1536,6 +1653,41 @@ static const char *App_LvglUiModParamButtonText(void)
   }
 }
 
+static uint32_t App_LvglUiGetSystemErrorStepHz(void)
+{
+  if (g_system_error_step_index >= (uint8_t)(sizeof(s_system_error_steps_hz) / sizeof(s_system_error_steps_hz[0])))
+  {
+    g_system_error_step_index = 0U;
+  }
+
+  return s_system_error_steps_hz[g_system_error_step_index];
+}
+
+static void App_LvglUiAdjustSystemError(int32_t direction)
+{
+  int64_t next_value = (int64_t)g_system_lo_error_hz + ((int64_t)direction * (int64_t)App_LvglUiGetSystemErrorStepHz());
+
+  if (next_value > 1000000LL)
+  {
+    next_value = 1000000LL;
+  }
+  else if (next_value < -1000000LL)
+  {
+    next_value = -1000000LL;
+  }
+
+  g_system_lo_error_hz = (int32_t)next_value;
+}
+
+static void App_LvglUiApplySystemErrorNow(void)
+{
+  (void)App_TxControl_SetLoErrorHz(g_system_lo_error_hz);
+  if (App_TxControl_GetCalibrationOutputEnabled() != 0U)
+  {
+    (void)App_TxControl_StartCalibrationOutput();
+  }
+}
+
 static void App_LvglUiRefreshModeVisibility(void)
 {
   uint8_t is_cw = App_LvglUiIsCwMode(g_ui_config.mode);
@@ -1552,6 +1704,26 @@ static void App_LvglUiRefreshModeVisibility(void)
     if (g_sweep_stop_button != NULL) { lv_obj_add_flag(g_sweep_stop_button, LV_OBJ_FLAG_HIDDEN); }
     if (g_edit_label != NULL) { lv_obj_add_flag(g_edit_label, LV_OBJ_FLAG_HIDDEN); }
     if (g_state_label != NULL) { lv_obj_add_flag(g_state_label, LV_OBJ_FLAG_HIDDEN); }
+    return;
+  }
+
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    if (g_preset_name_label != NULL) { lv_obj_add_flag(g_preset_name_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_preset_value_label != NULL) { lv_obj_add_flag(g_preset_value_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_preset_save_button != NULL) { lv_obj_add_flag(g_preset_save_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_preset_recall_button != NULL) { lv_obj_add_flag(g_preset_recall_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_button != NULL) { lv_obj_add_flag(g_sweep_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_time_button != NULL) { lv_obj_add_flag(g_sweep_time_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_start_button != NULL) { lv_obj_add_flag(g_sweep_start_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_sweep_stop_button != NULL) { lv_obj_add_flag(g_sweep_stop_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_state_label != NULL) { lv_obj_add_flag(g_state_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_mode_name_label != NULL) { lv_obj_add_flag(g_mode_name_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_mode_dropdown != NULL) { lv_obj_add_flag(g_mode_dropdown, LV_OBJ_FLAG_HIDDEN); }
+    if (g_debug_status_label != NULL) { lv_obj_add_flag(g_debug_status_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_debug_button != NULL) { lv_obj_add_flag(g_debug_button, LV_OBJ_FLAG_HIDDEN); }
+    if (g_ad9959_status_label != NULL) { lv_obj_add_flag(g_ad9959_status_label, LV_OBJ_FLAG_HIDDEN); }
+    if (g_f429_status_label != NULL) { lv_obj_add_flag(g_f429_status_label, LV_OBJ_FLAG_HIDDEN); }
     return;
   }
 
@@ -2237,6 +2409,15 @@ static void App_LvglUiOnFieldClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    App_LvglUiAdjustSystemError(-1);
+    App_LvglUiApplySystemErrorNow();
+    App_LvglUiRefreshValues();
+    App_LvglUiRefreshEditState();
+    App_LvglUiRefreshState();
+    return;
+  }
   if (g_active_section == APP_UI_SECTION_SWEEP)
   {
     App_LvglUiOpenKeypad(APP_UI_KEYPAD_SWEEP_START);
@@ -2258,6 +2439,15 @@ static void App_LvglUiOnDigitClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    App_LvglUiAdjustSystemError(1);
+    App_LvglUiApplySystemErrorNow();
+    App_LvglUiRefreshValues();
+    App_LvglUiRefreshEditState();
+    App_LvglUiRefreshState();
+    return;
+  }
   if (g_active_section == APP_UI_SECTION_SWEEP)
   {
     App_LvglUiOpenKeypad(APP_UI_KEYPAD_SWEEP_STOP);
@@ -2276,6 +2466,16 @@ static void App_LvglUiOnDecClicked(lv_event_t *e)
   (void)e;
   if (App_LvglUiIsDebugLocked() != 0U)
   {
+    App_LvglUiRefreshState();
+    return;
+  }
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    g_system_error_step_index = (uint8_t)((g_system_error_step_index + 1U) %
+                                          (uint8_t)(sizeof(s_system_error_steps_hz) / sizeof(s_system_error_steps_hz[0])));
+    App_LvglUiApplySystemErrorNow();
+    App_LvglUiRefreshValues();
+    App_LvglUiRefreshEditState();
     App_LvglUiRefreshState();
     return;
   }
@@ -2375,10 +2575,12 @@ static void App_LvglUiOnSweepClicked(lv_event_t *e)
   if (snapshot.basic.sweep_on != 0U)
   {
     (void)App_TxControl_SetSweepEnabled(0U);
+    (void)App_TxControl_Stop();
   }
   else
   {
     (void)App_TxControl_SetSweepEnabled(1U);
+    (void)App_TxControl_Start();
   }
 
   App_TxControl_GetSnapshot(&snapshot);
@@ -2455,6 +2657,23 @@ static void App_LvglUiOnRunClicked(lv_event_t *e)
 
   if (App_LvglUiIsDebugLocked() != 0U)
   {
+    App_LvglUiRefreshState();
+    return;
+  }
+
+  if (g_active_section == APP_UI_SECTION_SYSTEM)
+  {
+    if (App_TxControl_GetCalibrationOutputEnabled() != 0U)
+    {
+      (void)App_TxControl_StopCalibrationOutput();
+    }
+    else
+    {
+      App_LvglUiApplySystemErrorNow();
+      (void)App_TxControl_StartCalibrationOutput();
+    }
+    App_LvglUiRefreshValues();
+    App_LvglUiRefreshEditState();
     App_LvglUiRefreshState();
     return;
   }
@@ -2592,8 +2811,11 @@ static void App_LvglUiOnSystemClicked(lv_event_t *e)
   (void)e;
   (void)App_TxControl_SetSweepEnabled(0U);
   (void)App_TxControl_Stop();
+  g_system_lo_error_hz = App_TxControl_GetLoErrorHz();
   App_LvglUiSetActiveSection(APP_UI_SECTION_SYSTEM);
+  (void)App_TxControl_StartCalibrationOutput();
   App_LvglUiRefreshValues();
+  App_LvglUiRefreshEditState();
   App_LvglUiRefreshState();
 }
 
