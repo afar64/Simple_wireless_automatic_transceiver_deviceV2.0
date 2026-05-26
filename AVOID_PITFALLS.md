@@ -98,3 +98,8 @@ Update it after each completed task.
 - 2026-05-26 当前工程 `.ioc` 已实际将 `PA1/PA2/PA3` 配成 `GPIO_Output`，标签分别是 `LE / CLK / SI`；为避免后续驱动里看不懂通用名字，建议在 `main.h` 额外增加 `PE4302_LE/CLK/DATA` 别名，而不是直接重命名 CubeMX 生成的宏。
 - 2026-05-26 `PE4302` 驱动已独立成 `Core/APP/Attenuator/app_pe4302.c/.h`，启动时在 `main.c` 里初始化并默认下发 `0 dB`；当前实现严格按厂商例程的 `LE=高开始移位、结束拉低锁存` 顺序写 6bit 数据，先不要擅自改成常见的“LE 末尾拉高脉冲”写法。
 - 2026-05-26 CubeMX 若把用户标签起成 `PE4302_*`，有时会生成 `PE4302_LE_Pin_Pin / _GPIO_Port` 这类双后缀宏；驱动里不要假设会存在通用的 `LE_Pin`、`CLK_Pin`、`SI_Pin`，应在 `main.h` 明确做一层本工程自己的 `PE4302_LE/CLK/DATA` 别名。
+- 2026-05-27 `USART1 CLI` 新增衰减命令时，建议只支持 `ATTEN <dB>` 和 `ATTEN?` 两条最小命令；输入范围直接卡 `0.0~31.5 dB` 且仅接受 `0.5 dB` 步进，避免“用户输 10.3dB 但驱动悄悄四舍五入”的隐性行为。
+- 2026-05-27 PE4302 串口验证命令走 `USART1 CLI`：查询用 `ATTEN?`，设置用 `ATTEN <dB>`，例如 `ATTEN 0`、`ATTEN 10.5`、`ATTEN 31.5`；命令结尾发回车或回车换行即可。
+- 2026-05-27 当前工程里 `PE4302` 在 `App_Pe4302_Init()` 里默认调用 `App_Pe4302_SetHalfDbSteps(0)`，所以上电初始化默认衰减是 `0.0 dB`，不是保留上一次值。
+- 2026-05-27 当前 `Single` 页里 `AMP=100 mVrms` 的代码语义是“名义上 0.1 Vrms”，折算成正弦约为 `0.141 Vpk / 0.283 Vpp`；但本地 `CW` 路径实际送给 AD9959 的幅度码是 `1000`，不是满量程 `1023`。
+- When the user wants `MOD OUT` CH0 to start at full-scale by default, change `APP_AD9959_TASK_DEFAULT_AMP_CODE` in `Core/APP/Tasks/app_ad9959_task.h`. That constant drives the non-CW LO routing path; changing only UI text or CW amplitude code will not affect the modulation LO channel.

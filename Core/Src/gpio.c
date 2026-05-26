@@ -58,7 +58,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOI, AD9959_SDIO2_Pin|TOUCH_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOI, AD9959_SDIO2_Pin|REL2_Pin|TOUCH_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, AD9959_UPDATE_Pin|AD9959_SP2_Pin|AD9959_SP1_Pin|AD9959_PDC_Pin
@@ -100,6 +100,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : REL2_Pin TOUCH_RST_Pin */
+  GPIO_InitStruct.Pin = REL2_Pin|TOUCH_RST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
+
   /*Configure GPIO pins : AD9959_SP3_Pin AD9959_SCLK_Pin AD9959_SDIO0_Pin AD9959_SDIO1_Pin
                            AD9959_CS_Pin AD9959_SDIO3_Pin */
   GPIO_InitStruct.Pin = AD9959_SP3_Pin|AD9959_SCLK_Pin|AD9959_SDIO0_Pin|AD9959_SDIO1_Pin
@@ -122,13 +129,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : TOUCH_RST_Pin */
-  GPIO_InitStruct.Pin = TOUCH_RST_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(TOUCH_RST_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TOUCH_INT_Pin */
   GPIO_InitStruct.Pin = TOUCH_INT_Pin;

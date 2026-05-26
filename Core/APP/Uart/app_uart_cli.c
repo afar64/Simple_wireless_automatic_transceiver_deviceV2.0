@@ -1,6 +1,7 @@
 #include "app_uart_cli.h"
 
 #include "app_dds_ctrl.h"
+#include "app_pe4302.h"
 #include "app_tx_control.h"
 #include "app_winner_bridge.h"
 #include "main.h"
@@ -11,6 +12,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define APP_UART_CLI_LINE_MAX      128U
@@ -171,6 +173,54 @@ static void App_UartCliWriteDebugStatus(void)
   App_UartCliWriteFmt("DEBUG MODE %lu\r\n",
                       (uint32_t)App_TxControl_GetDebugModeEnabled(),
                       0U);
+}
+
+static void App_UartCliWriteAttenStatus(void)
+{
+  char out[64];
+  uint16_t db_x10 = App_Pe4302_GetDbTenths();
+  uint32_t whole = (uint32_t)(db_x10 / 10U);
+  uint32_t frac = (uint32_t)(db_x10 % 10U);
+  int len = snprintf(out, sizeof(out), "ATTEN %lu.%01lu dB\r\n",
+                     (unsigned long)whole,
+                     (unsigned long)frac);
+
+  if ((len > 0) && ((uint32_t)len < sizeof(out)))
+  {
+    App_UartCliWrite(out);
+  }
+}
+
+static uint8_t App_UartCliTryParseDbTenths(const char *text, uint16_t *db_x10)
+{
+  char *endptr = NULL;
+  double value;
+  long scaled;
+
+  if ((text == NULL) || (db_x10 == NULL))
+  {
+    return 0U;
+  }
+
+  value = strtod(text, &endptr);
+  if ((endptr == text) || (endptr == NULL) || (*endptr != '\0'))
+  {
+    return 0U;
+  }
+
+  if ((value < 0.0) || (value > 31.5))
+  {
+    return 0U;
+  }
+
+  scaled = (long)(value * 10.0 + 0.5);
+  if ((scaled < 0L) || (scaled > (long)APP_PE4302_MAX_DB_X10))
+  {
+    return 0U;
+  }
+
+  *db_x10 = (uint16_t)scaled;
+  return 1U;
 }
 
 static void App_UartCliRunStartupSelfTest(void)
@@ -696,6 +746,45 @@ static uint8_t App_UartCliHandleSelfTest(const char *line)
   return 1U;
 }
 
+static uint8_t App_UartCliHandleAtten(const char *line)
+{
+  const char *value_text = NULL;
+  uint16_t db_x10 = 0U;
+
+  if (line == NULL)
+  {
+    return 0U;
+  }
+
+  if (strcmp(line, "ATTEN?") == 0)
+  {
+    App_UartCliWriteAttenStatus();
+    return 1U;
+  }
+
+  if (strncmp(line, "ATTEN ", 6) != 0)
+  {
+    return 0U;
+  }
+
+  value_text = line + 6;
+  if (App_UartCliTryParseDbTenths(value_text, &db_x10) == 0U)
+  {
+    App_UartCliWrite("ERR atten range 0.0~31.5 step 0.5\r\n");
+    return 1U;
+  }
+
+  if ((db_x10 % 5U) != 0U)
+  {
+    App_UartCliWrite("ERR atten range 0.0~31.5 step 0.5\r\n");
+    return 1U;
+  }
+
+  App_Pe4302_SetDbTenths(db_x10);
+  App_UartCliWrite("OK ATTEN\r\n");
+  return 1U;
+}
+
 static void App_UartCliHandleCommand(char *line)
 {
   if (line == NULL)
@@ -719,6 +808,8 @@ static void App_UartCliHandleCommand(char *line)
     App_UartCliWrite("DEBUG ON\r\n");
     App_UartCliWrite("DEBUG OFF\r\n");
     App_UartCliWrite("DEBUG?\r\n");
+    App_UartCliWrite("ATTEN <DB>\r\n");
+    App_UartCliWrite("ATTEN?\r\n");
     App_UartCliWrite("SELFTEST\r\n");
     App_UartCliWrite("TXAM <LO_HZ> <LO_AMP> <QG> <QP> <IO> <QO> <FM> <OFFSET> <AMP> <DEPTH>\r\n");
     App_UartCliWrite("TXFM <LO_HZ> <LO_AMP> <QG> <QP> <IO> <QO> <FM> <OFFSET> <AMP> <DEV>\r\n");
@@ -771,6 +862,11 @@ static void App_UartCliHandleCommand(char *line)
   }
 
   if (App_UartCliHandleDebugSet(line) != 0U)
+  {
+    return;
+  }
+
+  if (App_UartCliHandleAtten(line) != 0U)
   {
     return;
   }

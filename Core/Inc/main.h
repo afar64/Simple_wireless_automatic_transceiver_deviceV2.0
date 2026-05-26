@@ -61,6 +61,8 @@ void Error_Handler(void);
 #define AD9959_SDIO2_GPIO_Port GPIOI
 #define AD9959_UPDATE_Pin GPIO_PIN_10
 #define AD9959_UPDATE_GPIO_Port GPIOC
+#define REL2_Pin GPIO_PIN_0
+#define REL2_GPIO_Port GPIOI
 #define AD9959_SP2_Pin GPIO_PIN_11
 #define AD9959_SP2_GPIO_Port GPIOC
 #define AD9959_SP3_Pin GPIO_PIN_14
