@@ -19,6 +19,7 @@ static osThreadId_t s_winner_bridge_task = NULL;
 
 static void App_WinnerBridgeTask(void *argument);
 static int App_WinnerBridge_SendQueuedModeRequest(const AppWinnerBridgeModeRequest *request);
+static int App_WinnerBridge_SendDirectModeRequest(const AppWinnerBridgeModeRequest *request);
 
 static void App_WinnerBridge_DebugWrite(const char *text)
 {
@@ -76,6 +77,29 @@ static uint16_t App_WinnerBridge_SendLineAndMirror(const char *line)
   return rx_len;
 }
 
+static int App_WinnerBridge_SendLineNoReply(const char *line)
+{
+  if ((line == NULL) || (line[0] == '\0'))
+  {
+    return -1;
+  }
+
+  App_WinnerBridge_DebugWrite("[WB] USART3 direct: ");
+  App_WinnerBridge_DebugWrite(line);
+
+  if (HAL_UART_Transmit(&huart3,
+                        (uint8_t *)line,
+                        (uint16_t)strlen(line),
+                        APP_WINNER_BRIDGE_UART_TIMEOUT_MS) != HAL_OK)
+  {
+    App_WinnerBridge_DebugWrite("[WB] USART3 direct send failed\r\n");
+    return -2;
+  }
+
+  App_WinnerBridge_DebugWrite("[WB] USART3 direct send done\r\n");
+  return 0;
+}
+
 void App_WinnerBridge_InitAsync(void)
 {
   if (s_winner_bridge_queue == NULL)
@@ -126,6 +150,11 @@ int App_WinnerBridge_QueueModeRequest(const AppWinnerBridgeModeRequest *request)
   }
 
   return -4;
+}
+
+int App_WinnerBridge_SendModeRequestDirect(const AppWinnerBridgeModeRequest *request)
+{
+  return App_WinnerBridge_SendDirectModeRequest(request);
 }
 
 static void App_WinnerBridgeTask(void *argument)
@@ -209,6 +238,64 @@ static int App_WinnerBridge_SendQueuedModeRequest(const AppWinnerBridgeModeReque
     default:
       return 0;
   }
+}
+
+static int App_WinnerBridge_SendDirectModeRequest(const AppWinnerBridgeModeRequest *request)
+{
+  char line[64];
+  int len;
+
+  if (request == NULL)
+  {
+    return -1;
+  }
+
+  switch (request->mode)
+  {
+    case APP_DAC_WAVE_MODE_AM:
+      len = snprintf(line, sizeof(line), "TAM %lu %u %u %u\r\n",
+                     (unsigned long)request->rate_hz,
+                     (unsigned)request->offset_code,
+                     (unsigned)request->amp_code,
+                     (unsigned)request->param_u32);
+      break;
+    case APP_DAC_WAVE_MODE_FM:
+      len = snprintf(line, sizeof(line), "TFM %lu %u %u %lu\r\n",
+                     (unsigned long)request->rate_hz,
+                     (unsigned)request->offset_code,
+                     (unsigned)request->amp_code,
+                     (unsigned long)request->param_u32);
+      break;
+    case APP_DAC_WAVE_MODE_2ASK:
+      len = snprintf(line, sizeof(line), "TASK %lu %u %u %u\r\n",
+                     (unsigned long)request->rate_hz,
+                     (unsigned)request->offset_code,
+                     (unsigned)request->amp_code,
+                     (unsigned)request->param_u32);
+      break;
+    case APP_DAC_WAVE_MODE_2FSK:
+      len = snprintf(line, sizeof(line), "TFSK %lu %u %u %lu\r\n",
+                     (unsigned long)request->rate_hz,
+                     (unsigned)request->offset_code,
+                     (unsigned)request->amp_code,
+                     (unsigned long)request->param_u32);
+      break;
+    case APP_DAC_WAVE_MODE_2PSK:
+      len = snprintf(line, sizeof(line), "TBPSK %lu %u %u\r\n",
+                     (unsigned long)request->rate_hz,
+                     (unsigned)request->offset_code,
+                     (unsigned)request->amp_code);
+      break;
+    default:
+      return -2;
+  }
+
+  if ((len <= 0) || ((uint32_t)len >= sizeof(line)))
+  {
+    return -3;
+  }
+
+  return App_WinnerBridge_SendLineNoReply(line);
 }
 
 static int App_WinnerBridge_SetLoAndCommonIq(uint32_t lo_freq_hz,

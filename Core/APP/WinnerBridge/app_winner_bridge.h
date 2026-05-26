@@ -26,6 +26,7 @@ typedef struct
 
 void App_WinnerBridge_InitAsync(void);
 int App_WinnerBridge_QueueModeRequest(const AppWinnerBridgeModeRequest *request);
+int App_WinnerBridge_SendModeRequestDirect(const AppWinnerBridgeModeRequest *request);
 
 int App_WinnerBridge_SendAmSequence(uint32_t lo_freq_hz,
                                     uint16_t lo_amp_code,

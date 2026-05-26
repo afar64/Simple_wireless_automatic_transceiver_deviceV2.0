@@ -147,6 +147,23 @@ static uint32_t App_TxControlApplyFrequencyErrorHz(uint32_t freq_hz)
   return (uint32_t)adjusted;
 }
 
+static uint32_t App_TxControlGetEffectiveLoFrequencyHz(void)
+{
+  uint64_t effective_freq_hz = s_desired_lo_freq_hz;
+
+  if (s_desired_config.mode == APP_DAC_WAVE_MODE_2FSK)
+  {
+    effective_freq_hz += ((uint64_t)s_desired_config.fsk_shift_hz / 2ULL);
+  }
+
+  if (effective_freq_hz > 0xFFFFFFFFULL)
+  {
+    effective_freq_hz = 0xFFFFFFFFULL;
+  }
+
+  return App_TxControl_ClampFrequencyHz((uint32_t)effective_freq_hz);
+}
+
 uint32_t App_TxControl_ClampFrequencyHz(uint32_t freq_hz)
 {
   if (freq_hz < APP_TX_CONTROL_FREQ_MIN_HZ)
@@ -193,7 +210,7 @@ static void App_TxControlApplyLoRouting(uint8_t enable_target_channel)
     target_amp_code = App_TxControlMapCwAmplitudeCode(s_desired_config.vpp_mv);
   }
 
-  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(s_desired_lo_freq_hz));
+  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(App_TxControlGetEffectiveLoFrequencyHz()));
   (void)App_LoTaskSetChannelAmplitudeCode(target_ch, target_amp_code);
   (void)App_LoTaskSetChannelEnable(target_ch, enable_target_channel);
   (void)App_LoTaskSetChannelEnable(other_ch, 0U);
@@ -203,7 +220,7 @@ static void App_TxControlApplyCurrentFrequencyOnly(void)
 {
   uint8_t target_ch = App_TxControlGetLoChannelForMode(s_desired_config.mode);
 
-  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(s_desired_lo_freq_hz));
+  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(App_TxControlGetEffectiveLoFrequencyHz()));
 }
 
 void App_TxControl_Init(void)
