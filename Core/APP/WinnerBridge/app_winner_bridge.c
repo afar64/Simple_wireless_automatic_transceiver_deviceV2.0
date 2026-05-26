@@ -220,66 +220,35 @@ static int App_WinnerBridge_SetLoAndCommonIq(uint32_t lo_freq_hz,
 {
   char line[64];
   int len;
-  uint16_t applied_lo_amp_code;
 
+  (void)lo_freq_hz;
   (void)lo_amp_code;
-
-  /* Non-CW modulation path uses CH0 as LO and forces full-scale DDS amplitude. */
-  applied_lo_amp_code = 1023U;
-
-  (void)App_LoTaskSetChannelEnable(APP_AD9959_TASK_CW_CHANNEL, 0U);
-
-  if (App_LoTaskSetChannelFrequencyHz(APP_AD9959_TASK_MOD_CHANNEL, lo_freq_hz) != 0)
-  {
-    App_WinnerBridge_DebugWrite("[WB] ERR local CH0 freq\r\n");
-    return -1;
-  }
-
-  if (App_LoTaskSetChannelAmplitudeCode(APP_AD9959_TASK_MOD_CHANNEL, applied_lo_amp_code) != 0)
-  {
-    App_WinnerBridge_DebugWrite("[WB] ERR local CH0 amp\r\n");
-    return -2;
-  }
-
-  if (App_LoTaskSetChannelEnable(APP_AD9959_TASK_MOD_CHANNEL, 1U) != 0)
-  {
-    App_WinnerBridge_DebugWrite("[WB] ERR local CH0 enable\r\n");
-    return -3;
-  }
-
-  len = snprintf(line, sizeof(line), "\r\n[WB] CH0 LO set: %lu Hz AMP %u\r\n",
-                 (unsigned long)lo_freq_hz,
-                 (unsigned)applied_lo_amp_code);
-  if ((len > 0) && ((uint32_t)len < sizeof(line)))
-  {
-    App_WinnerBridge_DebugWrite(line);
-  }
 
   len = snprintf(line, sizeof(line), "QG %u\r\n", (unsigned)q_gain_permille);
   if ((len <= 0) || ((uint32_t)len >= sizeof(line)))
   {
-    return -4;
+    return -1;
   }
   App_WinnerBridge_SendLineAndMirror(line);
 
   len = snprintf(line, sizeof(line), "QP %d\r\n", (int)q_phase_deg);
   if ((len <= 0) || ((uint32_t)len >= sizeof(line)))
   {
-    return -5;
+    return -2;
   }
   App_WinnerBridge_SendLineAndMirror(line);
 
   len = snprintf(line, sizeof(line), "IO %d\r\n", (int)i_trim);
   if ((len <= 0) || ((uint32_t)len >= sizeof(line)))
   {
-    return -6;
+    return -3;
   }
   App_WinnerBridge_SendLineAndMirror(line);
 
   len = snprintf(line, sizeof(line), "QO %d\r\n", (int)q_trim);
   if ((len <= 0) || ((uint32_t)len >= sizeof(line)))
   {
-    return -7;
+    return -4;
   }
   App_WinnerBridge_SendLineAndMirror(line);
 
