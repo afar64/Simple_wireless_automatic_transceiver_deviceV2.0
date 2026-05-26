@@ -264,6 +264,7 @@ void App_LvglUiInit(void)
   (void)App_TxControl_SetSweepEnabled(0U);
   (void)App_TxControl_SetMode(APP_DAC_WAVE_MODE_CW);
   (void)App_TxControl_Stop();
+  App_WinnerBridge_InitAsync();
   (void)App_TxControl_GetConfig(&desired_config, &desired_freq_hz);
   App_TxControl_GetSnapshot(&snapshot);
   g_ui_config = desired_config;
@@ -2797,6 +2798,7 @@ static void App_LvglUiOnSweepTimeClicked(lv_event_t *e)
 static void App_LvglUiOnRunClicked(lv_event_t *e)
 {
   AppTxControlSnapshot snapshot;
+  uint8_t should_send_winner = 0U;
 
   (void)e;
 
@@ -2808,9 +2810,15 @@ static void App_LvglUiOnRunClicked(lv_event_t *e)
 
   if (g_active_section == APP_UI_SECTION_SYSTEM)
   {
-    g_pending_calibration_on = (App_TxControl_GetCalibrationOutputEnabled() != 0U) ? 0U : 1U;
-    g_pending_calibration_on_valid = 1U;
-    g_pending_action = APP_UI_PENDING_ACTION_SYSTEM_RUN;
+    if (App_TxControl_GetCalibrationOutputEnabled() != 0U)
+    {
+      (void)App_TxControl_StopCalibrationOutput();
+    }
+    else
+    {
+      App_LvglUiApplySystemErrorNow();
+      (void)App_TxControl_StartCalibrationOutput();
+    }
     App_LvglUiRefreshValues();
     App_LvglUiRefreshEditState();
     App_LvglUiRefreshState();
@@ -2821,25 +2829,57 @@ static void App_LvglUiOnRunClicked(lv_event_t *e)
 
   if (g_active_section == APP_UI_SECTION_SWEEP)
   {
-    g_pending_sweep_on = (snapshot.basic.sweep_on != 0U) ? 0U : 1U;
-    g_pending_sweep_on_valid = 1U;
-    g_pending_action = APP_UI_PENDING_ACTION_SWEEP_RUN;
+    (void)App_TxControl_SetConfig(&g_ui_config);
+    if (snapshot.basic.sweep_on != 0U)
+    {
+      (void)App_TxControl_SetSweepEnabled(0U);
+      (void)App_TxControl_Stop();
+    }
+    else
+    {
+      (void)App_TxControl_SetSweepEnabled(1U);
+      (void)App_TxControl_Start();
+    }
     App_LvglUiRefreshState();
     return;
   }
   if (g_active_section == APP_UI_SECTION_MOD)
   {
-    g_pending_tx_on = (snapshot.basic.tx_on != 0U) ? 0U : 1U;
-    g_pending_tx_on_valid = 1U;
-    g_pending_action = APP_UI_PENDING_ACTION_MOD_RUN;
+    (void)App_TxControl_SetConfig(&g_ui_config);
+    (void)App_TxControl_SetFrequencyHz(g_lo_freq_hz);
+    if (snapshot.basic.tx_on != 0U)
+    {
+      (void)App_TxControl_Stop();
+    }
+    else
+    {
+      (void)App_TxControl_Start();
+      should_send_winner = 1U;
+    }
     App_LvglUiRefreshState();
+    if (should_send_winner != 0U)
+    {
+      (void)App_LvglUiSendCurrentModeToWinner();
+    }
     return;
   }
 
-  g_pending_tx_on = (snapshot.basic.tx_on != 0U) ? 0U : 1U;
-  g_pending_tx_on_valid = 1U;
-  g_pending_action = APP_UI_PENDING_ACTION_SINGLE_RUN;
+  (void)App_TxControl_SetConfig(&g_ui_config);
+  (void)App_TxControl_SetFrequencyHz(g_lo_freq_hz);
+  if (snapshot.basic.tx_on != 0U)
+  {
+    (void)App_TxControl_Stop();
+  }
+  else
+  {
+    (void)App_TxControl_Start();
+    should_send_winner = 1U;
+  }
   App_LvglUiRefreshState();
+  if (should_send_winner != 0U)
+  {
+    (void)App_LvglUiSendCurrentModeToWinner();
+  }
 }
 
 static void App_LvglUiOnDebugClicked(lv_event_t *e)
@@ -3077,6 +3117,7 @@ static void App_LvglUiOnKeypadDeleteClicked(lv_event_t *e)
 static int App_LvglUiSendCurrentModeToWinner(void)
 {
   uint32_t winner_lo_freq_hz = g_lo_freq_hz;
+  AppWinnerBridgeModeRequest request;
 
   if (App_LvglUiIsCwMode(g_ui_config.mode) != 0U)
   {
@@ -3088,62 +3129,38 @@ static int App_LvglUiSendCurrentModeToWinner(void)
     winner_lo_freq_hz += APP_UI_WINNER_FSK_LO_OFFSET_HZ;
   }
 
+  memset(&request, 0, sizeof(request));
+  request.mode = g_ui_config.mode;
+  request.lo_freq_hz = winner_lo_freq_hz;
+  request.lo_amp_code = APP_UI_WINNER_LO_AMP_DEFAULT;
+  request.q_gain_permille = APP_UI_WINNER_QG_DEFAULT;
+  request.q_phase_deg = APP_UI_WINNER_QP_DEFAULT;
+  request.i_trim = APP_UI_WINNER_IO_DEFAULT;
+  request.q_trim = APP_UI_WINNER_QO_DEFAULT;
+  request.offset_code = 8192U;
+  request.amp_code = 1200U;
+
   switch (g_ui_config.mode)
   {
     case APP_DAC_WAVE_MODE_AM:
-      return App_WinnerBridge_SendAmSequence(winner_lo_freq_hz,
-                                             APP_UI_WINNER_LO_AMP_DEFAULT,
-                                             APP_UI_WINNER_QG_DEFAULT,
-                                             APP_UI_WINNER_QP_DEFAULT,
-                                             APP_UI_WINNER_IO_DEFAULT,
-                                             APP_UI_WINNER_QO_DEFAULT,
-                                             g_ui_config.mod_freq_hz,
-                                             8192U,
-                                             1200U,
-                                             g_ui_config.am_depth_percent * 10U);
+      request.rate_hz = g_ui_config.mod_freq_hz;
+      request.param_u32 = (uint32_t)g_ui_config.am_depth_percent * 10U;
+      return App_WinnerBridge_QueueModeRequest(&request);
     case APP_DAC_WAVE_MODE_FM:
-      return App_WinnerBridge_SendFmSequence(winner_lo_freq_hz,
-                                             APP_UI_WINNER_LO_AMP_DEFAULT,
-                                             APP_UI_WINNER_QG_DEFAULT,
-                                             APP_UI_WINNER_QP_DEFAULT,
-                                             APP_UI_WINNER_IO_DEFAULT,
-                                             APP_UI_WINNER_QO_DEFAULT,
-                                             g_ui_config.mod_freq_hz,
-                                             8192U,
-                                             1200U,
-                                             g_ui_config.fm_deviation_hz);
+      request.rate_hz = g_ui_config.mod_freq_hz;
+      request.param_u32 = g_ui_config.fm_deviation_hz;
+      return App_WinnerBridge_QueueModeRequest(&request);
     case APP_DAC_WAVE_MODE_2ASK:
-      return App_WinnerBridge_SendAskSequence(winner_lo_freq_hz,
-                                              APP_UI_WINNER_LO_AMP_DEFAULT,
-                                              APP_UI_WINNER_QG_DEFAULT,
-                                              APP_UI_WINNER_QP_DEFAULT,
-                                              APP_UI_WINNER_IO_DEFAULT,
-                                              APP_UI_WINNER_QO_DEFAULT,
-                                              g_ui_config.symbol_rate_bps,
-                                              8192U,
-                                              1200U,
-                                              1000U);
+      request.rate_hz = g_ui_config.symbol_rate_bps;
+      request.param_u32 = 1000U;
+      return App_WinnerBridge_QueueModeRequest(&request);
     case APP_DAC_WAVE_MODE_2FSK:
-      return App_WinnerBridge_SendFskSequence(winner_lo_freq_hz,
-                                              APP_UI_WINNER_LO_AMP_DEFAULT,
-                                              APP_UI_WINNER_QG_DEFAULT,
-                                              APP_UI_WINNER_QP_DEFAULT,
-                                              APP_UI_WINNER_IO_DEFAULT,
-                                              APP_UI_WINNER_QO_DEFAULT,
-                                              g_ui_config.symbol_rate_bps,
-                                              8192U,
-                                              1200U,
-                                              g_ui_config.fsk_shift_hz);
+      request.rate_hz = g_ui_config.symbol_rate_bps;
+      request.param_u32 = g_ui_config.fsk_shift_hz;
+      return App_WinnerBridge_QueueModeRequest(&request);
     case APP_DAC_WAVE_MODE_2PSK:
-      return App_WinnerBridge_SendPskSequence(winner_lo_freq_hz,
-                                              APP_UI_WINNER_LO_AMP_DEFAULT,
-                                              APP_UI_WINNER_QG_DEFAULT,
-                                              APP_UI_WINNER_QP_DEFAULT,
-                                              APP_UI_WINNER_IO_DEFAULT,
-                                              APP_UI_WINNER_QO_DEFAULT,
-                                              g_ui_config.symbol_rate_bps,
-                                              8192U,
-                                              1200U);
+      request.rate_hz = g_ui_config.symbol_rate_bps;
+      return App_WinnerBridge_QueueModeRequest(&request);
     default:
       return -1;
   }

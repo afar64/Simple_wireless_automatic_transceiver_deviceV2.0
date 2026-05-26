@@ -3,9 +3,29 @@
 
 #include <stdint.h>
 
+#include "app_dac_wavegen.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct
+{
+  AppDacWavegenMode mode;
+  uint32_t lo_freq_hz;
+  uint16_t lo_amp_code;
+  uint16_t q_gain_permille;
+  int16_t q_phase_deg;
+  int16_t i_trim;
+  int16_t q_trim;
+  uint32_t rate_hz;
+  uint16_t offset_code;
+  uint16_t amp_code;
+  uint32_t param_u32;
+} AppWinnerBridgeModeRequest;
+
+void App_WinnerBridge_InitAsync(void);
+int App_WinnerBridge_QueueModeRequest(const AppWinnerBridgeModeRequest *request);
 
 int App_WinnerBridge_SendAmSequence(uint32_t lo_freq_hz,
                                     uint16_t lo_amp_code,
