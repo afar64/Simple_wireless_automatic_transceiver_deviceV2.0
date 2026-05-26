@@ -24,6 +24,7 @@
 #include "dac.h"
 #include "dma.h"
 #include "ltdc.h"
+#include "quadspi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -126,6 +127,7 @@ int main(void)
   MX_TIM6_Init();
   MX_DAC1_Init();
   MX_USART3_UART_Init();
+  MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

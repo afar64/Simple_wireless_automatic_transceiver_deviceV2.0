@@ -79,7 +79,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(REL1_GPIO_Port, REL1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(REL1_GPIO_Port, REL1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : AD9959_SDIO2_Pin */
   GPIO_InitStruct.Pin = AD9959_SDIO2_Pin;

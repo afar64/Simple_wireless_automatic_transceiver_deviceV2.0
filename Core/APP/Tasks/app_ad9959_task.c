@@ -23,7 +23,7 @@ static volatile uint16_t s_lo_amp_code[APP_DDS_CHANNEL_COUNT] = {
   APP_AD9959_TASK_DEFAULT_AMP_CODE,
   APP_AD9959_TASK_DEFAULT_AMP_CODE
 };
-static volatile uint8_t s_lo_enable[APP_DDS_CHANNEL_COUNT] = {0U, 1U, 0U, 0U};
+static volatile uint8_t s_lo_enable[APP_DDS_CHANNEL_COUNT] = {0U, 0U, 0U, 0U};
 static volatile uint8_t s_lo_dirty_mask = 0x0FU;
 
 static uint8_t App_LoTaskIsValidChannel(uint8_t ch)

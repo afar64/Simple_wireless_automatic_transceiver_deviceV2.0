@@ -85,6 +85,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
      Core/App/LVGL/app_lvgl_port_disp.c
      Core/App/LVGL/app_lvgl_port_indev.c
      Core/App/LVGL/app_lvgl_ui.c
+     Core/App/BoardFlash/app_board_flash.c
+     Core/App/BoardFlash/board_flash_qspi_port.c
+     Core/App/BoardFlash/board_flash_w25q64.c
      Core/App/TxControl/app_tx_control.c
      Core/App/Uart/app_uart_cli.c
      Core/App/DAC/app_dac_wavegen.c
@@ -109,6 +112,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
      Core/App/Tasks
      Core/App/Touch
      Core/App/LVGL
+     Core/App/BoardFlash
      Core/App/TxControl
      Core/App/Uart
      Core/App/DAC

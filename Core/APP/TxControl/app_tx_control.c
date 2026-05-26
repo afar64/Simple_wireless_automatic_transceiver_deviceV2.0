@@ -1,9 +1,22 @@
 #include "app_tx_control.h"
 
 #include "app_ad9959_task.h"
+#include "app_board_flash.h"
 #include "main.h"
 
 #include <string.h>
+
+#define APP_TX_CONTROL_LO_ERROR_FLASH_ADDR (APP_BOARD_FLASH_TOTAL_SIZE - APP_BOARD_FLASH_SECTOR_SIZE)
+#define APP_TX_CONTROL_LO_ERROR_FLASH_MAGIC 0x4C4F4552UL
+#define APP_TX_CONTROL_LO_ERROR_FLASH_VERSION 1U
+
+typedef struct
+{
+  uint32_t magic;
+  uint32_t version;
+  int32_t lo_error_hz;
+  uint32_t checksum;
+} AppTxControlLoErrorFlashRecord;
 
 static AppDacWavegenConfig s_desired_config;
 static uint32_t s_desired_lo_freq_hz = APP_AD9959_TASK_DEFAULT_FREQ_HZ;
@@ -18,6 +31,57 @@ static uint8_t s_calibration_output_enabled = 0U;
 static int32_t s_lo_error_hz = 0;
 static uint32_t s_sweep_last_tick_ms = 0U;
 static uint32_t s_sweep_start_tick_ms = 0U;
+
+static uint32_t App_TxControlLoErrorChecksum(const AppTxControlLoErrorFlashRecord *record)
+{
+  return record->magic ^ record->version ^ (uint32_t)record->lo_error_hz ^ 0x5A5AA5A5UL;
+}
+
+static void App_TxControlLoadLoErrorFromFlash(void)
+{
+  AppTxControlLoErrorFlashRecord record;
+
+  s_lo_error_hz = 0;
+  if (app_board_flash_read(APP_TX_CONTROL_LO_ERROR_FLASH_ADDR, (uint8_t *)&record, sizeof(record)) != APP_BOARD_FLASH_OK)
+  {
+    return;
+  }
+
+  if ((record.magic != APP_TX_CONTROL_LO_ERROR_FLASH_MAGIC) ||
+      (record.version != APP_TX_CONTROL_LO_ERROR_FLASH_VERSION) ||
+      (record.checksum != App_TxControlLoErrorChecksum(&record)))
+  {
+    return;
+  }
+
+  s_lo_error_hz = record.lo_error_hz;
+}
+
+static void App_TxControlSaveLoErrorToFlash(void)
+{
+  AppTxControlLoErrorFlashRecord current_record;
+  AppTxControlLoErrorFlashRecord next_record;
+
+  memset(&current_record, 0xFF, sizeof(current_record));
+  (void)app_board_flash_read(APP_TX_CONTROL_LO_ERROR_FLASH_ADDR, (uint8_t *)&current_record, sizeof(current_record));
+
+  next_record.magic = APP_TX_CONTROL_LO_ERROR_FLASH_MAGIC;
+  next_record.version = APP_TX_CONTROL_LO_ERROR_FLASH_VERSION;
+  next_record.lo_error_hz = s_lo_error_hz;
+  next_record.checksum = App_TxControlLoErrorChecksum(&next_record);
+
+  if (memcmp(&current_record, &next_record, sizeof(next_record)) == 0)
+  {
+    return;
+  }
+
+  if (app_board_flash_erase_4k(APP_TX_CONTROL_LO_ERROR_FLASH_ADDR) != APP_BOARD_FLASH_OK)
+  {
+    return;
+  }
+
+  (void)app_board_flash_write(APP_TX_CONTROL_LO_ERROR_FLASH_ADDR, (const uint8_t *)&next_record, sizeof(next_record));
+}
 
 static uint8_t App_TxControlIsCwMode(AppDacWavegenMode mode)
 {
@@ -144,6 +208,8 @@ static void App_TxControlApplyCurrentFrequencyOnly(void)
 
 void App_TxControl_Init(void)
 {
+  (void)app_board_flash_init();
+  App_TxControlLoadLoErrorFromFlash();
   App_TxControlLoadDesiredFromHardware();
   s_preset_lo_freq_hz = App_TxControl_ClampFrequencyHz(s_preset_lo_freq_hz);
   s_sweep_period_ms = App_TxControlClampSweepPeriodMs(s_sweep_period_ms);
@@ -159,11 +225,12 @@ void App_TxControl_GetSnapshot(AppTxControlSnapshot *snapshot)
     return;
   }
 
+  App_TxControlEnsureDesiredLoaded();
   memset(snapshot, 0, sizeof(*snapshot));
   App_DacWavegenGetStatus(&snapshot->dac_status);
-  snapshot->basic.mode = snapshot->dac_status.config.mode;
+  snapshot->basic.mode = s_desired_config.mode;
   snapshot->basic.freq_hz = App_TxControl_ClampFrequencyHz(s_desired_lo_freq_hz);
-  snapshot->basic.amplitude_mv = snapshot->dac_status.config.vpp_mv;
+  snapshot->basic.amplitude_mv = s_desired_config.vpp_mv;
   snapshot->basic.sweep_on = s_sweep_enabled;
   if (App_TxControlIsCwMode(snapshot->basic.mode) != 0U)
   {
@@ -465,6 +532,7 @@ uint8_t App_TxControl_GetCalibrationOutputEnabled(void)
 int App_TxControl_SetLoErrorHz(int32_t error_hz)
 {
   s_lo_error_hz = error_hz;
+  App_TxControlSaveLoErrorToFlash();
   return 0;
 }
 
