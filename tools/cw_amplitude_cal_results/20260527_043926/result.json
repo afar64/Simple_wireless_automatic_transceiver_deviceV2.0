@@ -1,0 +1,758 @@
+{
+  "meta": {
+    "created_at": "20260527_043926",
+    "port": "COM6",
+    "baudrate": 115200,
+    "scope": "192.168.2.28",
+    "freq_start_hz": 110000000,
+    "freq_stop_hz": 130000000,
+    "freq_step_hz": 10000,
+    "targets_mvrms": [
+      10.0,
+      50.0,
+      100.0
+    ],
+    "tolerance_mvrms": 1.0,
+    "settle_ms": 200.0,
+    "samples": 3,
+    "sample_delay_ms": 60.0,
+    "max_iterations": 8,
+    "initial_amp": 1023,
+    "initial_atten": 0.0,
+    "pilot": true,
+    "self_test": {
+      "dds_reply": "DDS CH0 FREQ 129998104 AMP 0\r\nDDS CH1 FREQ 19998104 AMP 0\r\nDDS CH2 FREQ 129998104 AMP 0\r\nDDS CH3 FREQ 129998104 AMP 0\r\n",
+      "atten_reply": "ATTEN 0.0 dB\r\n",
+      "atten_db": 0.0,
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "ch2_rms_mvrms": 2.8769,
+      "ch2_raw_samples_mvrms": [
+        2.016,
+        2.8769,
+        3.1463
+      ],
+      "serial_log": [
+        {
+          "command": "DDS?",
+          "reply": "DDS CH0 FREQ 129998104 AMP 0\r\nDDS CH1 FREQ 19998104 AMP 0\r\nDDS CH2 FREQ 129998104 AMP 0\r\nDDS CH3 FREQ 129998104 AMP 0\r\n"
+        },
+        {
+          "command": "ATTEN?",
+          "reply": "ATTEN 0.0 dB\r\n"
+        }
+      ]
+    }
+  },
+  "points": [
+    {
+      "freq_hz": 110000000,
+      "target_mvrms": 10.0,
+      "measured_mvrms": 9.6644,
+      "error_mvrms": -0.33559999999999945,
+      "amp_code": 1023,
+      "atten_db": 30.0,
+      "iterations": 4,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        8.789,
+        9.674999999999999,
+        9.6644
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 110000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 216.9073,
+          "error_mvrms": 206.9073,
+          "amp_code": 1023,
+          "atten_db": 0.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 110000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 13.7075,
+          "error_mvrms": 3.7074999999999996,
+          "amp_code": 1023,
+          "atten_db": 26.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 110000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 11.3007,
+          "error_mvrms": 1.3007000000000009,
+          "amp_code": 1023,
+          "atten_db": 29.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 4,
+          "freq_hz": 110000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 9.6644,
+          "error_mvrms": -0.33559999999999945,
+          "amp_code": 1023,
+          "atten_db": 30.0,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 0.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 110000000 AMP 1023",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 26.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 29.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 30.0",
+          "reply": "OK ATTEN\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 110000000,
+      "target_mvrms": 50.0,
+      "measured_mvrms": 49.4646,
+      "error_mvrms": -0.5354000000000028,
+      "amp_code": 1023,
+      "atten_db": 15.5,
+      "iterations": 3,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        49.4646,
+        49.2682,
+        49.4803
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 110000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 216.5369,
+          "error_mvrms": 166.5369,
+          "amp_code": 1023,
+          "atten_db": 0.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 110000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 71.92320000000001,
+          "error_mvrms": 21.92320000000001,
+          "amp_code": 1023,
+          "atten_db": 12.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 110000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 49.4646,
+          "error_mvrms": -0.5354000000000028,
+          "amp_code": 1023,
+          "atten_db": 15.5,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 0.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 110000000 AMP 1023",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 12.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 15.5",
+          "reply": "OK ATTEN\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 110000000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": 100.0809,
+      "error_mvrms": 0.08089999999999975,
+      "amp_code": 996,
+      "atten_db": 9.5,
+      "iterations": 6,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        100.6712,
+        100.0809,
+        97.89290000000001
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 110000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 216.4,
+          "error_mvrms": 116.4,
+          "amp_code": 1023,
+          "atten_db": 0.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 110000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 139.691,
+          "error_mvrms": 39.691,
+          "amp_code": 1023,
+          "atten_db": 6.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 110000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 103.01559999999999,
+          "error_mvrms": 3.015599999999992,
+          "amp_code": 1023,
+          "atten_db": 9.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 4,
+          "freq_hz": 110000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 95.91629999999999,
+          "error_mvrms": -4.083700000000007,
+          "amp_code": 1023,
+          "atten_db": 10.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 5,
+          "freq_hz": 110000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 102.7127,
+          "error_mvrms": 2.712699999999998,
+          "amp_code": 1023,
+          "atten_db": 9.5,
+          "action": "adjust amp"
+        },
+        {
+          "iteration": 6,
+          "freq_hz": 110000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 100.0809,
+          "error_mvrms": 0.08089999999999975,
+          "amp_code": 996,
+          "atten_db": 9.5,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 0.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 110000000 AMP 1023",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 6.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 9.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 10.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 9.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 110000000 AMP 996",
+          "reply": "OK CH1\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 120000000,
+      "target_mvrms": 10.0,
+      "measured_mvrms": 9.3469,
+      "error_mvrms": -0.6531000000000002,
+      "amp_code": 1023,
+      "atten_db": 31.5,
+      "iterations": 3,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        8.8804,
+        9.3469,
+        9.828
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 120000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 11.4238,
+          "error_mvrms": 1.4238,
+          "amp_code": 1023,
+          "atten_db": 30.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 120000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 11.1441,
+          "error_mvrms": 1.1441,
+          "amp_code": 1023,
+          "atten_db": 31.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 120000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 9.3469,
+          "error_mvrms": -0.6531000000000002,
+          "amp_code": 1023,
+          "atten_db": 31.5,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 30.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 120000000 AMP 1023",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 31.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 31.5",
+          "reply": "OK ATTEN\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 120000000,
+      "target_mvrms": 50.0,
+      "measured_mvrms": 51.4384,
+      "error_mvrms": 1.4384000000000015,
+      "amp_code": 1023,
+      "atten_db": 17.5,
+      "iterations": 8,
+      "pass_fail": "FAIL",
+      "reason": "max iterations",
+      "rms_samples_mvrms": [
+        51.4384,
+        52.3804,
+        51.41
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 63.196299999999994,
+          "error_mvrms": 13.196299999999994,
+          "amp_code": 1023,
+          "atten_db": 15.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 51.8298,
+          "error_mvrms": 1.8297999999999988,
+          "amp_code": 1023,
+          "atten_db": 17.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 47.8324,
+          "error_mvrms": -2.1676,
+          "amp_code": 1023,
+          "atten_db": 18.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 4,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 52.1875,
+          "error_mvrms": 2.1875,
+          "amp_code": 1023,
+          "atten_db": 17.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 5,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 47.093500000000006,
+          "error_mvrms": -2.906499999999994,
+          "amp_code": 1023,
+          "atten_db": 18.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 6,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 52.4465,
+          "error_mvrms": 2.4465000000000003,
+          "amp_code": 1023,
+          "atten_db": 17.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 7,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 47.9645,
+          "error_mvrms": -2.035499999999999,
+          "amp_code": 1023,
+          "atten_db": 18.0,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 8,
+          "freq_hz": 120000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 51.4384,
+          "error_mvrms": 1.4384000000000015,
+          "amp_code": 1023,
+          "atten_db": 17.5,
+          "action": "adjust amp"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 15.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 120000000 AMP 1023",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 17.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 18.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 17.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 18.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 17.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 18.0",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 17.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 120000000 AMP 994",
+          "reply": "OK CH1\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 120000000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": 99.7069,
+      "error_mvrms": -0.2930999999999955,
+      "amp_code": 1019,
+      "atten_db": 11.5,
+      "iterations": 3,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        99.0368,
+        99.7069,
+        100.1277
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 120000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 124.8482,
+          "error_mvrms": 24.848200000000006,
+          "amp_code": 996,
+          "atten_db": 9.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 120000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 97.7691,
+          "error_mvrms": -2.2309000000000054,
+          "amp_code": 996,
+          "atten_db": 11.5,
+          "action": "adjust amp"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 120000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 99.7069,
+          "error_mvrms": -0.2930999999999955,
+          "amp_code": 1019,
+          "atten_db": 11.5,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 9.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 120000000 AMP 996",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 11.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 120000000 AMP 1019",
+          "reply": "OK CH1\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 130000000,
+      "target_mvrms": 10.0,
+      "measured_mvrms": 9.114799999999999,
+      "error_mvrms": -0.8852000000000011,
+      "amp_code": 1023,
+      "atten_db": 30.5,
+      "iterations": 2,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        9.0712,
+        10.817,
+        9.114799999999999
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 130000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 8.8308,
+          "error_mvrms": -1.1692,
+          "amp_code": 1023,
+          "atten_db": 31.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 130000000,
+          "target_mvrms": 10.0,
+          "measured_mvrms": 9.114799999999999,
+          "error_mvrms": -0.8852000000000011,
+          "amp_code": 1023,
+          "atten_db": 30.5,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 31.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 130000000 AMP 1023",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 30.5",
+          "reply": "OK ATTEN\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 130000000,
+      "target_mvrms": 50.0,
+      "measured_mvrms": 50.2385,
+      "error_mvrms": 0.23850000000000193,
+      "amp_code": 1023,
+      "atten_db": 17.0,
+      "iterations": 3,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        50.2385,
+        50.6775,
+        49.074600000000004
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 130000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 57.524300000000004,
+          "error_mvrms": 7.524300000000004,
+          "amp_code": 1023,
+          "atten_db": 15.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 130000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 52.550399999999996,
+          "error_mvrms": 2.5503999999999962,
+          "amp_code": 1023,
+          "atten_db": 16.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 130000000,
+          "target_mvrms": 50.0,
+          "measured_mvrms": 50.2385,
+          "error_mvrms": 0.23850000000000193,
+          "amp_code": 1023,
+          "atten_db": 17.0,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 15.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 130000000 AMP 1023",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 16.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "ATTEN 17.0",
+          "reply": "OK ATTEN\r\n"
+        }
+      ]
+    },
+    {
+      "freq_hz": 130000000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": 99.01790000000001,
+      "error_mvrms": -0.9820999999999884,
+      "amp_code": 992,
+      "atten_db": 10.5,
+      "iterations": 3,
+      "pass_fail": "PASS",
+      "reason": "within tolerance",
+      "rms_samples_mvrms": [
+        99.01790000000001,
+        98.3638,
+        99.33319999999999
+      ],
+      "iteration_log": [
+        {
+          "iteration": 1,
+          "freq_hz": 130000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 91.58070000000001,
+          "error_mvrms": -8.419299999999993,
+          "amp_code": 1019,
+          "atten_db": 11.5,
+          "action": "adjust atten"
+        },
+        {
+          "iteration": 2,
+          "freq_hz": 130000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 102.6849,
+          "error_mvrms": 2.684899999999999,
+          "amp_code": 1019,
+          "atten_db": 10.5,
+          "action": "adjust amp"
+        },
+        {
+          "iteration": 3,
+          "freq_hz": 130000000,
+          "target_mvrms": 100.0,
+          "measured_mvrms": 99.01790000000001,
+          "error_mvrms": -0.9820999999999884,
+          "amp_code": 992,
+          "atten_db": 10.5,
+          "action": "measure"
+        }
+      ],
+      "serial_log": [
+        {
+          "command": "ATTEN 11.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 130000000 AMP 1019",
+          "reply": "OK CH1\r\n"
+        },
+        {
+          "command": "ATTEN 10.5",
+          "reply": "OK ATTEN\r\n"
+        },
+        {
+          "command": "DDS CH1 FREQ 130000000 AMP 992",
+          "reply": "OK CH1\r\n"
+        }
+      ]
+    }
+  ]
+}

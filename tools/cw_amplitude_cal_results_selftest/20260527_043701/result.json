@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "created_at": "20260527_043701",
+    "port": "COM6",
+    "baudrate": 115200,
+    "scope": "192.168.2.28",
+    "freq_start_hz": 110000000,
+    "freq_stop_hz": 130000000,
+    "freq_step_hz": 10000,
+    "targets_mvrms": [
+      10.0,
+      20.0,
+      30.0,
+      40.0,
+      50.0,
+      60.0,
+      70.0,
+      80.0,
+      90.0,
+      100.0
+    ],
+    "tolerance_mvrms": 1.0,
+    "settle_ms": 200.0,
+    "samples": 3,
+    "sample_delay_ms": 60.0,
+    "max_iterations": 8,
+    "initial_amp": 1023,
+    "initial_atten": 0.0,
+    "pilot": false,
+    "self_test": {
+      "dds_reply": "DDS CH0 FREQ 129998104 AMP 0\r\nDDS CH1 FREQ 129998104 AMP 300\r\nDDS CH2 FREQ 129998104 AMP 0\r\nDDS CH3 FREQ 129998104 AMP 0\r\n",
+      "atten_reply": "ATTEN 0.0 dB\r\n",
+      "atten_db": 0.0,
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "ch2_rms_mvrms": 101.1243,
+      "ch2_raw_samples_mvrms": [
+        101.1243,
+        100.6461,
+        102.55590000000001
+      ],
+      "serial_log": [
+        {
+          "command": "DDS?",
+          "reply": "DDS CH0 FREQ 129998104 AMP 0\r\nDDS CH1 FREQ 129998104 AMP 300\r\nDDS CH2 FREQ 129998104 AMP 0\r\nDDS CH3 FREQ 129998104 AMP 0\r\n"
+        },
+        {
+          "command": "ATTEN?",
+          "reply": "ATTEN 0.0 dB\r\n"
+        }
+      ]
+    }
+  },
+  "points": []
+}

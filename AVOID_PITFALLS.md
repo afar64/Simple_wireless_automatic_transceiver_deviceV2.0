@@ -103,3 +103,4 @@ Update it after each completed task.
 - 2026-05-27 当前工程里 `PE4302` 在 `App_Pe4302_Init()` 里默认调用 `App_Pe4302_SetHalfDbSteps(0)`，所以上电初始化默认衰减是 `0.0 dB`，不是保留上一次值。
 - 2026-05-27 当前 `Single` 页里 `AMP=100 mVrms` 的代码语义是“名义上 0.1 Vrms”，折算成正弦约为 `0.141 Vpk / 0.283 Vpp`；但本地 `CW` 路径实际送给 AD9959 的幅度码是 `1000`，不是满量程 `1023`。
 - When the user wants `MOD OUT` CH0 to start at full-scale by default, change `APP_AD9959_TASK_DEFAULT_AMP_CODE` in `Core/APP/Tasks/app_ad9959_task.h`. That constant drives the non-CW LO routing path; changing only UI text or CW amplitude code will not affect the modulation LO channel.
+- For single-carrier amplitude calibration, keep the automation strictly sequential: send one H743 serial command, wait for its expected reply, let the RF settle, read Tek `CH2 CRMs`, then compute the next attenuation or AD9959 code. The PE4302 attenuation should be adjusted first; only move the AD9959 code when the attenuation range or 0.5 dB quantization cannot meet the target.
