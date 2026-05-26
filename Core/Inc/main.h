@@ -84,10 +84,10 @@ void Error_Handler(void);
 #define TOUCH_SDA_GPIO_Port GPIOG
 #define TOUCH_SCLK_Pin GPIO_PIN_3
 #define TOUCH_SCLK_GPIO_Port GPIOG
-#define CLK_Pin GPIO_PIN_2
-#define CLK_GPIO_Port GPIOA
-#define LE_Pin GPIO_PIN_1
-#define LE_GPIO_Port GPIOA
+#define PE4302_CLK_Pin_Pin GPIO_PIN_2
+#define PE4302_CLK_Pin_GPIO_Port GPIOA
+#define PE4302_LE_Pin_Pin GPIO_PIN_1
+#define PE4302_LE_Pin_GPIO_Port GPIOA
 #define AD9959_SCLK_Pin GPIO_PIN_10
 #define AD9959_SCLK_GPIO_Port GPIOH
 #define AD9959_SDIO0_Pin GPIO_PIN_11
@@ -100,14 +100,27 @@ void Error_Handler(void);
 #define LCD_BL_GPIO_Port GPIOH
 #define AD9959_SDIO3_Pin GPIO_PIN_8
 #define AD9959_SDIO3_GPIO_Port GPIOH
-#define SI_Pin GPIO_PIN_3
-#define SI_GPIO_Port GPIOA
+#define PE4302_DATA_Pin_Pin GPIO_PIN_3
+#define PE4302_DATA_Pin_GPIO_Port GPIOA
 #define REL1_Pin GPIO_PIN_0
 #define REL1_GPIO_Port GPIOB
 #define AD9959_AUX_PH7_Pin GPIO_PIN_7
 #define AD9959_AUX_PH7_GPIO_Port GPIOH
 
 /* USER CODE BEGIN Private defines */
+
+/* PE4302 attenuator control lines on GPIOA
+ * PA1 -> LE   (latch enable)
+ * PA2 -> CLK  (serial clock)
+ * PA3 -> SI   (serial data input)
+ * RF module power remains external 5V, and GND must be common.
+ */
+#define PE4302_LE_Pin PE4302_LE_Pin_Pin
+#define PE4302_LE_GPIO_Port PE4302_LE_Pin_GPIO_Port
+#define PE4302_CLK_Pin PE4302_CLK_Pin_Pin
+#define PE4302_CLK_GPIO_Port PE4302_CLK_Pin_GPIO_Port
+#define PE4302_DATA_Pin PE4302_DATA_Pin_Pin
+#define PE4302_DATA_GPIO_Port PE4302_DATA_Pin_GPIO_Port
 
 /* USER CODE END Private defines */
 

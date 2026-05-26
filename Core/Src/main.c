@@ -32,6 +32,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "app_pe4302.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -129,6 +130,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
+  App_Pe4302_Init();
 
   /* USER CODE END 2 */
 

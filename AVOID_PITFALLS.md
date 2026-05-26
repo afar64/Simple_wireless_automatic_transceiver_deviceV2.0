@@ -95,3 +95,6 @@ Update it after each completed task.
 - Distinguish clearly between the two serial-control meanings in this project: current `WinnerBridge` UART sends modulation commands from H743 to F429, while local AD9959 LO control is still direct in H743 code. "Serial controls H743 LO" would require a separate inbound UART command parser on H743; it is not what the current APPLY path does.
 - 2026-05-26 PE4302 衰减器模块资料确认：这是 `LE/CLK/DATA` 三线 GPIO 锁存控制，不需要额外启用 SPI 外设；厂商例程是 6bit 数据、0.5dB 步进、范围 `0~31.5dB`，更适合在当前工程中新增独立 `Attenuator/PE4302` 模块，用 bit-bang GPIO 驱动并由 UI/TxControl 调用。
 - 2026-05-26 PE4302 若使用 `PA1/PA2/PA3`，CubeMX 里直接配成普通 `GPIO_Output` 即可；推荐映射 `PA1=LE`、`PA2=CLK`、`PA3=DATA`，模式用 `Output Push Pull`、`No pull`，速度先用 `Low` 或 `Medium`，不需要开启 SPI/定时器/中断/DMA。
+- 2026-05-26 当前工程 `.ioc` 已实际将 `PA1/PA2/PA3` 配成 `GPIO_Output`，标签分别是 `LE / CLK / SI`；为避免后续驱动里看不懂通用名字，建议在 `main.h` 额外增加 `PE4302_LE/CLK/DATA` 别名，而不是直接重命名 CubeMX 生成的宏。
+- 2026-05-26 `PE4302` 驱动已独立成 `Core/APP/Attenuator/app_pe4302.c/.h`，启动时在 `main.c` 里初始化并默认下发 `0 dB`；当前实现严格按厂商例程的 `LE=高开始移位、结束拉低锁存` 顺序写 6bit 数据，先不要擅自改成常见的“LE 末尾拉高脉冲”写法。
+- 2026-05-26 CubeMX 若把用户标签起成 `PE4302_*`，有时会生成 `PE4302_LE_Pin_Pin / _GPIO_Port` 这类双后缀宏；驱动里不要假设会存在通用的 `LE_Pin`、`CLK_Pin`、`SI_Pin`，应在 `main.h` 明确做一层本工程自己的 `PE4302_LE/CLK/DATA` 别名。
