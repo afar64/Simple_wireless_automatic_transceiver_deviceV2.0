@@ -93,3 +93,5 @@ Update it after each completed task.
 - Workflow rule for this project: finish all file edits first, then run one clean build and one flash pass. Do not interleave partial edits with intermediate build/flash status updates.
 - On compile/flash-only requests, do not touch unrelated code. Rebuild the current tree, flash the latest ELF, and report the concrete result only.
 - Distinguish clearly between the two serial-control meanings in this project: current `WinnerBridge` UART sends modulation commands from H743 to F429, while local AD9959 LO control is still direct in H743 code. "Serial controls H743 LO" would require a separate inbound UART command parser on H743; it is not what the current APPLY path does.
+- 2026-05-26 PE4302 衰减器模块资料确认：这是 `LE/CLK/DATA` 三线 GPIO 锁存控制，不需要额外启用 SPI 外设；厂商例程是 6bit 数据、0.5dB 步进、范围 `0~31.5dB`，更适合在当前工程中新增独立 `Attenuator/PE4302` 模块，用 bit-bang GPIO 驱动并由 UI/TxControl 调用。
+- 2026-05-26 PE4302 若使用 `PA1/PA2/PA3`，CubeMX 里直接配成普通 `GPIO_Output` 即可；推荐映射 `PA1=LE`、`PA2=CLK`、`PA3=DATA`，模式用 `Output Push Pull`、`No pull`，速度先用 `Low` 或 `Medium`，不需要开启 SPI/定时器/中断/DMA。

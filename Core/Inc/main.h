@@ -84,6 +84,10 @@ void Error_Handler(void);
 #define TOUCH_SDA_GPIO_Port GPIOG
 #define TOUCH_SCLK_Pin GPIO_PIN_3
 #define TOUCH_SCLK_GPIO_Port GPIOG
+#define CLK_Pin GPIO_PIN_2
+#define CLK_GPIO_Port GPIOA
+#define LE_Pin GPIO_PIN_1
+#define LE_GPIO_Port GPIOA
 #define AD9959_SCLK_Pin GPIO_PIN_10
 #define AD9959_SCLK_GPIO_Port GPIOH
 #define AD9959_SDIO0_Pin GPIO_PIN_11
@@ -96,6 +100,8 @@ void Error_Handler(void);
 #define LCD_BL_GPIO_Port GPIOH
 #define AD9959_SDIO3_Pin GPIO_PIN_8
 #define AD9959_SDIO3_GPIO_Port GPIOH
+#define SI_Pin GPIO_PIN_3
+#define SI_GPIO_Port GPIOA
 #define REL1_Pin GPIO_PIN_0
 #define REL1_GPIO_Port GPIOB
 #define AD9959_AUX_PH7_Pin GPIO_PIN_7
