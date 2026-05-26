@@ -1,0 +1,576 @@
+{
+  "meta": {
+    "created_at": "20260527_055841",
+    "control_port": "COM6",
+    "control_baudrate": 115200,
+    "stability_port": "COM9",
+    "stability_baudrate": 115200,
+    "stable_keyword": "STABLE",
+    "stable_timeout_s": 10.0,
+    "scope": "192.168.2.28",
+    "freq_start_hz": 110000000,
+    "freq_stop_hz": 130000000,
+    "freq_step_hz": 100000,
+    "modes": [
+      "AM",
+      "FM",
+      "2ASK",
+      "2FSK",
+      "2PSK"
+    ],
+    "target_mvrms": 100.0,
+    "tolerance_mvrms": 2.0,
+    "settle_ms": 200.0,
+    "samples": 3,
+    "sample_delay_ms": 60.0,
+    "max_iterations": 8,
+    "initial_amp": 1023,
+    "initial_atten": 0.0,
+    "pilot": false,
+    "defaults": {
+      "qg": 980,
+      "qp": 0,
+      "io": -50,
+      "qo": 100,
+      "lo_amp": 512,
+      "offset": 8192,
+      "f429_amp": 1200,
+      "mod_freq_hz": 10000,
+      "symbol_rate_bps": 10000,
+      "am_depth_permille": 500,
+      "ask_depth_permille": 1000,
+      "fm_dev_hz": 75000,
+      "fsk_shift_hz": 20000
+    },
+    "self_test": {
+      "dds_reply": "DDS CH0 FREQ 129998104 AMP 0\r\nDDS CH1 FREQ 1188",
+      "atten_reply": "10104 AMP 1023\r\nDDS CH2 FREQ 129998104 AMP 0\r\nDDS CH3 FREQ 129998104 AMP 0\r\nATTEN 31.5 dB\r\n",
+      "stability_probe_lines": [],
+      "scope_idn": "TEKTRONIX,DPO3034,C013425,CF:91.1CT FV:v2.23",
+      "ch2_rms_mvrms": 14.9756,
+      "ch2_raw_samples_mvrms": [
+        8.6458,
+        14.9756,
+        16.168499999999998
+      ],
+      "serial_log": [
+        {
+          "port": "COM6",
+          "command": "DDS?",
+          "reply": "DDS CH0 FREQ 129998104 AMP 0\r\nDDS CH1 FREQ 1188"
+        },
+        {
+          "port": "COM6",
+          "command": "ATTEN?",
+          "reply": "10104 AMP 1023\r\nDDS CH2 FREQ 129998104 AMP 0\r\nDDS CH3 FREQ 129998104 AMP 0\r\nATTEN 31.5 dB\r\n"
+        }
+      ]
+    }
+  },
+  "points": [
+    {
+      "mode": "AM",
+      "freq_hz": 110000000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110000000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.006001949310303,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110100000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110100000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.05406665802002,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110200000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110200000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.069738864898682,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110300000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110300000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.051437377929688,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110400000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110400000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.027563333511353,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110500000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110500000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.039437055587769,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110600000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110600000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.032928466796875,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110700000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110700000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.03546667098999,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110800000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110800000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.033496379852295,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 110900000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 110900000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.048823833465576,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 111000000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 111000000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.032788753509521,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "AM",
+      "freq_hz": 111100000,
+      "target_mvrms": 100.0,
+      "measured_mvrms": NaN,
+      "error_mvrms": NaN,
+      "amp_code_ch0": 1023,
+      "atten_db": 0.0,
+      "iterations": 0,
+      "pass_fail": "FAIL",
+      "reason": "stability keyword 'STABLE' timeout",
+      "scope_raw_samples_mvrms": [],
+      "iteration_log": [],
+      "com6_serial_log": [
+        {
+          "port": "COM6",
+          "command": "TXAM 111100000 512 980 0 -50 100 10000 8192 1200 500",
+          "reply": "[WB] USART3 send: QG 980\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QP 0\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: IO -50\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: QO 100\r\n[WB] USART3 reply: <none>\r\n[WB] USART3 send: TAM 10000 8192 1200 500\r\n[WB] USART3 reply: <none>\r\n[WB] TXAM done\r\nOK TXAM\r\n"
+        }
+      ],
+      "com9_stability_log": [
+        {
+          "port": "COM9",
+          "keyword": "STABLE",
+          "matched": false,
+          "elapsed_s": 10.036751747131348,
+          "lines": [
+            "SET Q_GAIN 980",
+            "SET Q_PHASE 0",
+            "SET I_DC_TRIM -50",
+            "SET Q_DC_TRIM 100",
+            "BUILD TAM fm=10000 offset=8192 amp=1200 m_permille=500",
+            "SET TABLE_STEP freq=10000 step=343597",
+            "REG8=0x3E2D rb=0x3E2D OK",
+            "REG9=0x0005 rb=0x0005 OK",
+            "TABLE VERIFY first4 OK",
+            "SET MODE 0x0006 TABLE",
+            "REG0=0x0006 rb=0x0006 OK"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 #include "app_tx_control.h"
 #include "app_winner_bridge.h"
 #include "app_dds_ctrl.h"
+#include "app_pe4302.h"
 
 #include "lvgl.h"
 
@@ -49,6 +50,7 @@ typedef enum
   APP_UI_KEYPAD_SWEEP_START,
   APP_UI_KEYPAD_SWEEP_STOP,
   APP_UI_KEYPAD_SWEEP_TIME,
+  APP_UI_KEYPAD_SWEEP_AMP,
   APP_UI_KEYPAD_MOD_FC,
   APP_UI_KEYPAD_MOD_FREQ,
   APP_UI_KEYPAD_MOD_DEPTH
@@ -924,7 +926,8 @@ static void App_LvglUiRefreshValues(void)
   lv_label_set_text(g_lo_name_label, (mode == APP_DAC_WAVE_MODE_2FSK) ? "Init freq" : "FC");
   if (App_LvglUiIsCwMode(mode) != 0U)
   {
-    lv_label_set_text(g_vpp_name_label, "Amp");
+    lv_label_set_text(g_vpp_name_label,
+                      (g_active_section == APP_UI_SECTION_SWEEP) ? "Target RMS" : "Amp");
     lv_label_set_text_fmt(g_vpp_value_label, "%u mVrms",
                           (unsigned)App_LvglUiInternalToAmpRmsMv(g_ui_config.vpp_mv));
     lv_label_set_text(g_rate_name_label, "Rate");
@@ -1399,7 +1402,9 @@ static void App_LvglUiRefreshSectionVisibility(void)
     g_sweep_start_name_label, g_sweep_start_value_label,
     g_sweep_stop_name_label, g_sweep_stop_value_label,
     g_sweep_time_name_label, g_sweep_time_value_label,
-    g_rf_name_label, g_rf_value_label, g_field_button, g_digit_button, g_dec_button, g_run_button
+    g_vpp_name_label, g_vpp_value_label,
+    g_rf_name_label, g_rf_value_label,
+    g_field_button, g_digit_button, g_dec_button, g_inc_button, g_run_button
   };
   lv_obj_t *show_mod_objs[] = {
     g_mode_name_label, g_mode_dropdown,
@@ -1539,58 +1544,73 @@ static void App_LvglUiApplySweepLayout(void)
   if (label != NULL) { lv_label_set_text(label, "STOP"); }
   label = (g_dec_button != NULL) ? lv_obj_get_child(g_dec_button, 0) : NULL;
   if (label != NULL) { lv_label_set_text(label, "TIME"); }
+  label = (g_inc_button != NULL) ? lv_obj_get_child(g_inc_button, 0) : NULL;
+  if (label != NULL) { lv_label_set_text(label, "RMS"); }
 
   if (g_sweep_start_name_label != NULL)
   {
-    lv_obj_align(g_sweep_start_name_label, LV_ALIGN_TOP_LEFT, 248, 138);
+    lv_obj_align(g_sweep_start_name_label, LV_ALIGN_TOP_LEFT, 248, 122);
   }
   if (g_sweep_start_value_label != NULL)
   {
-    lv_obj_align(g_sweep_start_value_label, LV_ALIGN_TOP_LEFT, 390, 138);
+    lv_obj_align(g_sweep_start_value_label, LV_ALIGN_TOP_LEFT, 390, 122);
   }
   if (g_sweep_stop_name_label != NULL)
   {
-    lv_obj_align(g_sweep_stop_name_label, LV_ALIGN_TOP_LEFT, 248, 184);
+    lv_obj_align(g_sweep_stop_name_label, LV_ALIGN_TOP_LEFT, 248, 168);
   }
   if (g_sweep_stop_value_label != NULL)
   {
-    lv_obj_align(g_sweep_stop_value_label, LV_ALIGN_TOP_LEFT, 390, 184);
+    lv_obj_align(g_sweep_stop_value_label, LV_ALIGN_TOP_LEFT, 390, 168);
   }
   if (g_sweep_time_name_label != NULL)
   {
-    lv_obj_align(g_sweep_time_name_label, LV_ALIGN_TOP_LEFT, 248, 230);
+    lv_obj_align(g_sweep_time_name_label, LV_ALIGN_TOP_LEFT, 248, 214);
   }
   if (g_sweep_time_value_label != NULL)
   {
-    lv_obj_align(g_sweep_time_value_label, LV_ALIGN_TOP_LEFT, 390, 230);
+    lv_obj_align(g_sweep_time_value_label, LV_ALIGN_TOP_LEFT, 390, 214);
+  }
+  if (g_vpp_name_label != NULL)
+  {
+    lv_obj_align(g_vpp_name_label, LV_ALIGN_TOP_LEFT, 248, 260);
+  }
+  if (g_vpp_value_label != NULL)
+  {
+    lv_obj_align(g_vpp_value_label, LV_ALIGN_TOP_LEFT, 390, 260);
   }
   if (g_rf_name_label != NULL)
   {
-    lv_obj_align(g_rf_name_label, LV_ALIGN_TOP_LEFT, 248, 276);
+    lv_obj_align(g_rf_name_label, LV_ALIGN_TOP_LEFT, 248, 306);
   }
   if (g_rf_value_label != NULL)
   {
-    lv_obj_align(g_rf_value_label, LV_ALIGN_TOP_LEFT, 390, 276);
+    lv_obj_align(g_rf_value_label, LV_ALIGN_TOP_LEFT, 390, 306);
   }
   if (g_field_button != NULL)
   {
     lv_obj_set_size(g_field_button, 96, 44);
-    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 220, -30);
+    lv_obj_align(g_field_button, LV_ALIGN_BOTTOM_LEFT, 184, -30);
   }
   if (g_digit_button != NULL)
   {
     lv_obj_set_size(g_digit_button, 96, 44);
-    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 328, -30);
+    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 292, -30);
   }
   if (g_dec_button != NULL)
   {
     lv_obj_set_size(g_dec_button, 96, 44);
-    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 436, -30);
+    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 400, -30);
+  }
+  if (g_inc_button != NULL)
+  {
+    lv_obj_set_size(g_inc_button, 96, 44);
+    lv_obj_align(g_inc_button, LV_ALIGN_BOTTOM_LEFT, 508, -30);
   }
   if (g_run_button != NULL)
   {
     lv_obj_set_size(g_run_button, 104, 44);
-    lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 548, -30);
+    lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 616, -30);
   }
 }
 
@@ -1824,7 +1844,10 @@ static void App_LvglUiRefreshModeVisibility(void)
   if (g_sweep_start_button != NULL) { lv_obj_add_flag(g_sweep_start_button, LV_OBJ_FLAG_HIDDEN); }
   if (g_sweep_stop_button != NULL) { lv_obj_add_flag(g_sweep_stop_button, LV_OBJ_FLAG_HIDDEN); }
   if (g_state_label != NULL) { lv_obj_add_flag(g_state_label, LV_OBJ_FLAG_HIDDEN); }
-  if (g_inc_button != NULL) { lv_obj_add_flag(g_inc_button, LV_OBJ_FLAG_HIDDEN); }
+  if ((g_inc_button != NULL) && (g_active_section != APP_UI_SECTION_SWEEP))
+  {
+    lv_obj_add_flag(g_inc_button, LV_OBJ_FLAG_HIDDEN);
+  }
 
   if (g_active_section == APP_UI_SECTION_SYSTEM)
   {
@@ -2138,7 +2161,7 @@ static void App_LvglUiOpenKeypad(AppUiKeypadTarget target)
   {
     App_LvglUiSelectField(APP_UI_FIELD_LO_FREQ);
   }
-  else if (target == APP_UI_KEYPAD_AMP)
+  else if ((target == APP_UI_KEYPAD_AMP) || (target == APP_UI_KEYPAD_SWEEP_AMP))
   {
     App_LvglUiSelectField(APP_UI_FIELD_VPP);
   }
@@ -2204,10 +2227,11 @@ static void App_LvglUiRefreshKeypad(void)
       lv_obj_clear_flag(g_keypad_dot_button, LV_OBJ_FLAG_HIDDEN);
     }
   }
-  else if (g_keypad_target == APP_UI_KEYPAD_AMP)
+  else if ((g_keypad_target == APP_UI_KEYPAD_AMP) || (g_keypad_target == APP_UI_KEYPAD_SWEEP_AMP))
   {
     current_value = App_LvglUiInternalToAmpRmsMv(g_ui_config.vpp_mv);
-    lv_label_set_text(g_keypad_title_label, "Set AMP");
+    lv_label_set_text(g_keypad_title_label,
+                      (g_keypad_target == APP_UI_KEYPAD_SWEEP_AMP) ? "Set RMS" : "Set AMP");
     lv_label_set_text(g_keypad_unit_label, "mVrms");
     lv_label_set_text_fmt(g_keypad_current_label,
                           "Current: %lu mVrms",
@@ -2470,7 +2494,7 @@ static uint8_t App_LvglUiTryParseKeypadValue(AppUiKeypadTarget target, const cha
   }
   else
   {
-    if (target == APP_UI_KEYPAD_AMP)
+    if ((target == APP_UI_KEYPAD_AMP) || (target == APP_UI_KEYPAD_SWEEP_AMP))
     {
       min_value = APP_UI_AMP_RMS_MIN_MV;
       max_value = APP_UI_AMP_RMS_MAX_MV;
@@ -2662,6 +2686,11 @@ static void App_LvglUiOnIncClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
+  if (g_active_section == APP_UI_SECTION_SWEEP)
+  {
+    App_LvglUiOpenKeypad(APP_UI_KEYPAD_SWEEP_AMP);
+    return;
+  }
   App_LvglUiAdjustSelectedField(1);
   App_LvglUiRefreshValues();
   App_LvglUiRefreshEditState();
@@ -2743,6 +2772,7 @@ static void App_LvglUiOnSweepClicked(lv_event_t *e)
     (void)App_TxControl_Start();
   }
 
+  App_Pe4302_SetHalfDbSteps(APP_PE4302_MAX_HALF_DB_STEPS);
   App_TxControl_GetSnapshot(&snapshot);
   g_lo_freq_hz = snapshot.basic.freq_hz;
   g_lo_freq_dirty = 0U;
@@ -3060,7 +3090,7 @@ static void App_LvglUiOnKeypadOkClicked(lv_event_t *e)
     App_LvglUiApplyConfig();
     return;
   }
-  if (g_keypad_target == APP_UI_KEYPAD_AMP)
+  if ((g_keypad_target == APP_UI_KEYPAD_AMP) || (g_keypad_target == APP_UI_KEYPAD_SWEEP_AMP))
   {
     App_LvglUiSetFieldValue(APP_UI_FIELD_VPP, value);
     App_LvglUiCloseKeypad();

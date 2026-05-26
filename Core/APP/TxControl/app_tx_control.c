@@ -2,6 +2,8 @@
 
 #include "app_ad9959_task.h"
 #include "app_board_flash.h"
+#include "app_cw_amp_cal.h"
+#include "app_pe4302.h"
 #include "main.h"
 
 #include <string.h>
@@ -115,6 +117,42 @@ static uint16_t App_TxControlMapCwAmplitudeCode(uint16_t amplitude_mv)
   return amplitude_mv;
 }
 
+static uint16_t App_TxControlGetCwTargetRmsMv(void)
+{
+  uint32_t target_mvrms = ((uint32_t)s_desired_config.vpp_mv + 5U) / 10U;
+
+  if (target_mvrms < APP_CW_AMP_CAL_TARGET_MIN_MVRMS)
+  {
+    target_mvrms = APP_CW_AMP_CAL_TARGET_MIN_MVRMS;
+  }
+
+  if (target_mvrms > APP_CW_AMP_CAL_TARGET_MAX_MVRMS)
+  {
+    target_mvrms = APP_CW_AMP_CAL_TARGET_MAX_MVRMS;
+  }
+
+  return (uint16_t)target_mvrms;
+}
+
+static uint16_t App_TxControlApplyCwAmplitudeCalibration(uint32_t freq_hz, uint8_t enable_output)
+{
+  AppCwAmpCalResult cal;
+
+  if (enable_output == 0U)
+  {
+    App_Pe4302_SetHalfDbSteps(APP_PE4302_MAX_HALF_DB_STEPS);
+    return 0U;
+  }
+
+  if (App_CwAmpCal_Lookup(freq_hz, App_TxControlGetCwTargetRmsMv(), &cal) == 0)
+  {
+    App_Pe4302_SetDbTenths(cal.atten_db_x10);
+    return cal.amp_code;
+  }
+
+  return App_TxControlMapCwAmplitudeCode(s_desired_config.vpp_mv);
+}
+
 static uint32_t App_TxControlClampSweepPeriodMs(uint32_t period_ms)
 {
   if (period_ms < APP_TX_CONTROL_SWEEP_PERIOD_MIN_MS)
@@ -204,13 +242,14 @@ static void App_TxControlApplyLoRouting(uint8_t enable_target_channel)
   uint8_t target_ch = App_TxControlGetLoChannelForMode(s_desired_config.mode);
   uint8_t other_ch = (target_ch == APP_AD9959_TASK_CW_CHANNEL) ? APP_AD9959_TASK_MOD_CHANNEL : APP_AD9959_TASK_CW_CHANNEL;
   uint16_t target_amp_code = APP_AD9959_TASK_DEFAULT_AMP_CODE;
+  uint32_t target_freq_hz = App_TxControlGetEffectiveLoFrequencyHz();
 
   if (App_TxControlIsCwMode(s_desired_config.mode) != 0U)
   {
-    target_amp_code = App_TxControlMapCwAmplitudeCode(s_desired_config.vpp_mv);
+    target_amp_code = App_TxControlApplyCwAmplitudeCalibration(target_freq_hz, enable_target_channel);
   }
 
-  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(App_TxControlGetEffectiveLoFrequencyHz()));
+  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(target_freq_hz));
   (void)App_LoTaskSetChannelAmplitudeCode(target_ch, target_amp_code);
   (void)App_LoTaskSetChannelEnable(target_ch, enable_target_channel);
   (void)App_LoTaskSetChannelEnable(other_ch, 0U);
@@ -219,8 +258,15 @@ static void App_TxControlApplyLoRouting(uint8_t enable_target_channel)
 static void App_TxControlApplyCurrentFrequencyOnly(void)
 {
   uint8_t target_ch = App_TxControlGetLoChannelForMode(s_desired_config.mode);
+  uint32_t target_freq_hz = App_TxControlGetEffectiveLoFrequencyHz();
 
-  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(App_TxControlGetEffectiveLoFrequencyHz()));
+  if (App_TxControlIsCwMode(s_desired_config.mode) != 0U)
+  {
+    uint16_t amp_code = App_TxControlApplyCwAmplitudeCalibration(target_freq_hz, App_LoTaskGetChannelEnable(target_ch));
+    (void)App_LoTaskSetChannelAmplitudeCode(target_ch, amp_code);
+  }
+
+  (void)App_LoTaskSetChannelFrequencyHz(target_ch, App_TxControlApplyFrequencyErrorHz(target_freq_hz));
 }
 
 void App_TxControl_Init(void)
@@ -357,6 +403,7 @@ int App_TxControl_Start(void)
 
 int App_TxControl_Stop(void)
 {
+  App_Pe4302_SetHalfDbSteps(APP_PE4302_MAX_HALF_DB_STEPS);
   s_sweep_enabled = 0U;
   s_calibration_output_enabled = 0U;
   App_DacWavegenStop();

@@ -1,0 +1,13 @@
+mode,freq_hz,target_mvrms,measured_mvrms,error_mvrms,amp_code_ch0,atten_db,iterations,pass_fail,reason
+AM,110000000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110100000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110200000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110300000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110400000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110500000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110600000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110700000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110800000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,110900000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,111000000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout
+AM,111100000,100.0,nan,nan,1023,0.0,0,FAIL,stability keyword 'STABLE' timeout

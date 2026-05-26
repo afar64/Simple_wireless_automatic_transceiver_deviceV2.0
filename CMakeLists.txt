@@ -89,6 +89,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
      Core/App/BoardFlash/app_board_flash.c
      Core/App/BoardFlash/board_flash_qspi_port.c
      Core/App/BoardFlash/board_flash_w25q64.c
+     Core/App/TxControl/app_cw_amp_cal.c
      Core/App/TxControl/app_tx_control.c
      Core/App/Uart/app_uart_cli.c
      Core/App/DAC/app_dac_wavegen.c
