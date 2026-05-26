@@ -687,7 +687,7 @@ static void App_LvglUiCreateButtons(lv_obj_t *parent)
     lv_obj_set_size(g_apply_button, 88, 44);
     lv_obj_align(g_apply_button, LV_ALIGN_BOTTOM_LEFT, 590, -24);
     lv_obj_add_event_cb(g_apply_button, App_LvglUiOnApplyClicked, LV_EVENT_CLICKED, NULL);
-    lv_label_set_text(apply_label, "Apply");
+    lv_label_set_text(apply_label, "APPLY");
     lv_obj_center(apply_label);
   }
 
@@ -1394,7 +1394,7 @@ static void App_LvglUiRefreshSectionVisibility(void)
     g_rate_name_label, g_rate_value_label,
     g_param_name_label, g_param_value_label,
     g_rf_name_label, g_rf_value_label,
-    g_field_button, g_digit_button, g_dec_button, g_run_button
+    g_field_button, g_digit_button, g_dec_button, g_apply_button, g_run_button
   };
   lv_obj_t *show_system_objs[] = {
     g_lo_name_label, g_lo_value_label,
@@ -1646,17 +1646,22 @@ static void App_LvglUiApplyModLayout(void)
   if (g_digit_button != NULL)
   {
     lv_obj_set_size(g_digit_button, 96, 44);
-    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 328, -30);
+    lv_obj_align(g_digit_button, LV_ALIGN_BOTTOM_LEFT, 332, -30);
   }
   if (g_dec_button != NULL)
   {
     lv_obj_set_size(g_dec_button, 96, 44);
-    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 436, -30);
+    lv_obj_align(g_dec_button, LV_ALIGN_BOTTOM_LEFT, 444, -30);
+  }
+  if (g_apply_button != NULL)
+  {
+    lv_obj_set_size(g_apply_button, 96, 44);
+    lv_obj_align(g_apply_button, LV_ALIGN_BOTTOM_LEFT, 556, -30);
   }
   if (g_run_button != NULL)
   {
-    lv_obj_set_size(g_run_button, 104, 44);
-    lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 548, -30);
+    lv_obj_set_size(g_run_button, 96, 44);
+    lv_obj_align(g_run_button, LV_ALIGN_BOTTOM_LEFT, 556, -84);
   }
 }
 
@@ -2666,7 +2671,12 @@ static void App_LvglUiOnApplyClicked(lv_event_t *e)
     App_LvglUiRefreshState();
     return;
   }
-  App_LvglUiApplyConfig();
+  if (g_active_section != APP_UI_SECTION_MOD)
+  {
+    App_LvglUiRefreshState();
+    return;
+  }
+  (void)App_LvglUiSendCurrentModeToWinner();
 }
 
 static void App_LvglUiOnPresetSaveClicked(lv_event_t *e)
@@ -2798,7 +2808,6 @@ static void App_LvglUiOnSweepTimeClicked(lv_event_t *e)
 static void App_LvglUiOnRunClicked(lv_event_t *e)
 {
   AppTxControlSnapshot snapshot;
-  uint8_t should_send_winner = 0U;
 
   (void)e;
 
@@ -2854,13 +2863,8 @@ static void App_LvglUiOnRunClicked(lv_event_t *e)
     else
     {
       (void)App_TxControl_Start();
-      should_send_winner = 1U;
     }
     App_LvglUiRefreshState();
-    if (should_send_winner != 0U)
-    {
-      (void)App_LvglUiSendCurrentModeToWinner();
-    }
     return;
   }
 
@@ -2873,13 +2877,8 @@ static void App_LvglUiOnRunClicked(lv_event_t *e)
   else
   {
     (void)App_TxControl_Start();
-    should_send_winner = 1U;
   }
   App_LvglUiRefreshState();
-  if (should_send_winner != 0U)
-  {
-    (void)App_LvglUiSendCurrentModeToWinner();
-  }
 }
 
 static void App_LvglUiOnDebugClicked(lv_event_t *e)
